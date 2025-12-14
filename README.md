@@ -2,7 +2,7 @@
 
 # Preheat
 
-[![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&weight=500&size=20&duration=3000&pause=1000&color=58A6FF&center=true&vCenter=true&width=500&lines=Adaptive+readahead+daemon;Make+your+apps+launch+faster;30-60%25+faster+cold+starts)](https://github.com/wasteddreams/preheat)
+[![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&weight=500&size=18&duration=3000&pause=1000&color=58A6FF&center=true&vCenter=true&width=500&lines=Preload+%E2%80%A2+Predict+%E2%80%A2+Perform;Adaptive+readahead+daemon;30-60%25+faster+cold+starts)](https://github.com/wasteddreams/preheat)
 
 [![License: GPL v2](https://img.shields.io/badge/License-GPL_v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
 [![Linux](https://img.shields.io/badge/Linux-FCC624?logo=linux&logoColor=black)](https://www.kernel.org/)
