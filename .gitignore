@@ -1,0 +1,66 @@
+# Build artifacts
+*.o
+*.lo
+*.la
+*.so
+*.a
+.libs/
+.deps/
+*.Po
+.dirstamp
+
+# Autotools generated files
+/autom4te.cache/
+/aclocal.m4
+/compile
+/config.guess
+/config.h
+/config.h.in
+/config.h.in~
+/config.log
+/config.status
+/config.sub
+/configure
+/configure~
+/depcomp
+/install-sh
+/libtool
+/ltmain.sh
+/missing
+/stamp-h1
+/test-driver
+Makefile
+Makefile.in
+*~
+
+# Binary outputs
+/src/preheat
+/tools/preheat-ctl
+
+# Runtime files
+*.log
+*.state
+/preheat.log
+/preheat.state
+
+# IDE / Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Test outputs
+test-suite.log
+*.trs
+
+# systemd generated
+/debian/preheat.service
+
+# Backup files
+*.bak
+*.orig
+
+# Reference materials (not for distribution)
+/upstream-source/
