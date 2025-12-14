@@ -1,0 +1,31 @@
+# Preheat Manual Apps Whitelist
+#
+# List applications you want to always preload, one per line.
+# Lines starting with # are comments.
+# Paths must be absolute (start with /).
+#
+# Example:
+# /usr/bin/firefox
+# /usr/bin/code
+# /usr/bin/burpsuite
+# /usr/bin/wireshark
+# /usr/bin/nmap
+#
+# These apps will be preloaded even if the daemon hasn't learned them yet.
+# They receive highest priority for preloading.
+#
+# To enable, uncomment desired apps below or add your own:
+
+# Browsers
+# /usr/bin/firefox
+# /usr/bin/chromium
+
+# IDEs/Editors
+# /usr/bin/code
+# /usr/bin/vim
+
+# Security Tools
+# /usr/bin/burpsuite
+# /usr/bin/wireshark
+# /usr/bin/nmap
+# /usr/bin/metasploit-framework

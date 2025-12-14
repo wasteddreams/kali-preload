@@ -1,0 +1,172 @@
+[model]
+
+# cycle:
+#
+# Quantum of time for preheat. The daemon performs data gathering
+# and predictions every cycle. Use an even number.
+#
+# Note: Setting this parameter too low may reduce system performance.
+#
+# unit: seconds
+# default: 20
+#
+cycle = 20
+
+# usecorrelation:
+#
+# Whether correlation coefficient should be used in the prediction
+# algorithm. Currently it's believed that using it results in more
+# accurate prediction.
+#
+# default: true
+usecorrelation = true
+
+# minsize:
+#
+# Minimum sum of the length of maps of the process for preheat
+# to consider tracking the application.
+#
+# unit: bytes
+# default: 2000000
+#
+minsize = 2000000
+
+#
+# Memory management (all values are signed integer percentages)
+#
+# The total memory preheat uses for prefetching is computed using:
+#   max(0, TOTAL * memtotal + FREE * memfree) + CACHED * memcached
+#
+
+# memtotal: percentage of total memory
+# default: -10
+memtotal = -10
+
+# memfree: percentage of free memory  
+# default: 50
+memfree = 50
+
+# memcached: percentage of cached memory
+# default: 0
+memcached = 0
+
+
+###########################################################################
+
+[system]
+
+# doscan:
+#
+# Whether preheat should monitor running processes and update its
+# model state.
+#
+# default: true
+doscan = true
+
+# dopredict:
+#
+# Whether preheat should make predictions and prefetch from disk.
+#
+# default: true
+dopredict = true
+
+# autosave:
+#
+# Preheat will automatically save the state to disk every autosave
+# seconds. State saves also trigger janitor work (removing entries for
+# files that no longer exist).
+#
+# unit: seconds
+# default: 3600
+#
+autosave = 3600
+
+# mapprefix:
+#
+# List of path prefixes that control which mapped files are considered.
+# Separated by semicolons. Matching stops at first item matched.
+# Items starting with ! are rejected, others are accepted.
+#
+# default: /usr/;/lib;/var/cache/;!/
+mapprefix = /usr/;/lib;/var/cache/;!/
+
+# exeprefix:
+#
+# Same syntax as mapprefix, but for binary executables.
+#
+# default: !/usr/sbin/;!/usr/local/sbin/;/usr/;!/
+exeprefix = !/usr/sbin/;!/usr/local/sbin/;/usr/;!/
+
+# processes:
+#
+# Maximum number of processes to use for parallel readahead.
+# 0 means no parallel processing, all readahead done in-process.
+#
+# default: 30
+processes = 30
+
+# sortstrategy:
+#
+# I/O sorting strategy:
+#   0 - SORT_NONE:  No sorting (useful for Flash memory)
+#   1 - SORT_PATH:  Sort by path (useful for network filesystems)
+#   2 - SORT_INODE: Sort by inode (less I/O housekeeping)
+#   3 - SORT_BLOCK: Sort by disk block (most sophisticated, for HDD)
+#
+# default: 3
+sortstrategy = 3
+
+# manualapps:
+#
+# Path to file containing manually specified applications to always preload.
+# One absolute path per line. Lines starting with # are comments.
+# These apps receive highest priority for preloading.
+#
+# default: (empty, disabled)
+# manualapps = /etc/preheat.d/apps.list
+
+
+###########################################################################
+
+[kali]
+
+# Kali-specific extensions (require --enable-kali-extensions build flag)
+
+# enable_kali_scoring:
+#
+# Enable Kali-specific scoring enhancements for security tools.
+# Has no effect unless built with --enable-kali-extensions.
+#
+# default: false
+enable_kali_scoring = false
+
+# kali_tool_boost:
+#
+# Priority multiplier for known Kali security tools (when enabled).
+#
+# default: 1.0 (no boost); set to 1.5 for 50% priority boost
+kali_tool_boost = 1.0
+
+# enable_time_learning:
+#
+# Enable time-of-day usage pattern learning.
+# Has no effect unless built with --enable-kali-extensions.
+#
+# default: false
+enable_time_learning = false
+
+# manual_apps_list:
+#
+# Path to file containing manually specified applications to always preload.
+# One absolute path per line. These apps get highest priority.
+#
+# default: /etc/preheat.d/apps.list
+manual_apps_list = /etc/preheat.d/apps.list
+
+# blacklist:
+#
+# Path to file containing applications to never track or preload.
+# One absolute path per line.
+#
+# default: /etc/preheat.d/blacklist
+blacklist = /etc/preheat.d/blacklist

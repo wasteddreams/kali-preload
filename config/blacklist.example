@@ -1,0 +1,14 @@
+# Preheat Blacklist
+#
+# Applications listed here will never be tracked or preloaded.
+# One absolute path per line. Lines starting with # are comments.
+#
+# Examples of applications you might want to blacklist:
+
+# /usr/bin/find
+# /usr/bin/updatedb
+# /usr/bin/apt
+# /usr/bin/dpkg
+
+# Add applications to blacklist below:
+
