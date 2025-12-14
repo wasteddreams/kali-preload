@@ -1,10 +1,11 @@
-# Preheat
+# 🔥 Preheat
 
 <div align="center">
 
 [![License: GPL v2](https://img.shields.io/badge/License-GPL_v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
-[![Platform](https://img.shields.io/badge/Platform-Linux-green.svg)](https://www.kernel.org/)
-[![Debian](https://img.shields.io/badge/Debian-Based-red.svg)](https://www.debian.org/)
+[![Linux](https://img.shields.io/badge/Linux-FCC624?logo=linux&logoColor=black)](https://www.kernel.org/)
+[![Systemd](https://img.shields.io/badge/Systemd-Ready-green?logo=systemd&logoColor=white)](https://systemd.io/)
+[![Performance](https://img.shields.io/badge/Speedup-30--60%25-orange?logo=speedtest&logoColor=white)]()
 
 **Adaptive readahead daemon for Linux**
 
