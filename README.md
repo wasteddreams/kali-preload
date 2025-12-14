@@ -3,10 +3,10 @@
 <div align="center">
 
 [![License: GPL v2](https://img.shields.io/badge/License-GPL_v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
-[![C99](https://img.shields.io/badge/C-99-blue.svg)](https://en.wikipedia.org/wiki/C99)
-[![Linux](https://img.shields.io/badge/Platform-Linux-green.svg)](https://www.kernel.org/)
+[![Platform](https://img.shields.io/badge/Platform-Linux-green.svg)](https://www.kernel.org/)
+[![Debian](https://img.shields.io/badge/Debian-Based-red.svg)](https://www.debian.org/)
 
-**Adaptive readahead daemon for Kali Linux**
+**Adaptive readahead daemon for Linux**
 
 *Reduces application cold-start times by 30-60% through intelligent prediction and preloading*
 
