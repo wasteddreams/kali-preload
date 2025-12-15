@@ -293,17 +293,17 @@ Do **NOT** modify defaults unless you understand the impact.
 
 ---
 
-## Advanced: Kali Extensions
+## Advanced: Preheat Extensions
 
 **NOT YET IMPLEMENTED** - Reserved for future versions.
 
 When available, will require:
-1. Build with `--enable-kali-extensions`
+1. Build with `--enable-preheat-extensions`
 2. Explicit config flags (all default to `false`)
 
 Planned extensions:
 - Time-of-day learning patterns
-- Kali tool priority boosting
+- Tool priority boosting
 - Enhanced multi-factor scoring
 
 ---

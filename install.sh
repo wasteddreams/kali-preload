@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Kali-Preload One-Line Installer
+# Preheat One-Line Installer
 # curl -fsSL https://raw.githubusercontent.com/wasteddreams/preheat/main/install.sh | sudo bash
 #
 
@@ -14,7 +14,7 @@ NC='\033[0m'
 
 echo ""
 echo -e "${BLUE}╔═══════════════════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║          KALI-PRELOAD INSTALLER                           ║${NC}"
+echo -e "${BLUE}║          PREHEAT INSTALLER                                ║${NC}"
 echo -e "${BLUE}║          Make your apps launch faster                     ║${NC}"
 echo -e "${BLUE}╚═══════════════════════════════════════════════════════════╝${NC}"
 echo ""
@@ -71,7 +71,7 @@ rm -rf "$TMPDIR"
 
 echo ""
 echo -e "${GREEN}╔═══════════════════════════════════════════════════════════╗${NC}"
-echo -e "${GREEN}║  DONE! Kali-Preload is now running.                       ║${NC}"
+echo -e "${GREEN}║  DONE! Preheat is now running.                            ║${NC}"
 echo -e "${GREEN}╚═══════════════════════════════════════════════════════════╝${NC}"
 echo ""
 echo "Useful commands:"

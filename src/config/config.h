@@ -24,7 +24,7 @@
 #define hours			3600
 
 #define signed_integer_percent	   1
-#define percent_times_100	   1  /* Kali extension */
+#define percent_times_100	   1  /* Preheat extension */
 #define processes		   1
 
 /**
@@ -68,16 +68,16 @@ typedef struct _kp_conf_t
         int manual_apps_count;      /* Number of loaded apps */
     } system;
     
-#ifdef ENABLE_KALI_EXTENSIONS
-    /* [kali] section - Kali-specific extensions */
-    struct _conf_kali {
-        gboolean enable_kali_scoring;  /* Enable Kali tool boosting */
-        int kali_tool_boost;            /* Priority boost (100 = 1.0x, 150 = 1.5x) */
+#ifdef ENABLE_PREHEAT_EXTENSIONS
+    /* [preheat] section - Preheat extensions */
+    struct _conf_preheat {
+        gboolean enable_preheat_scoring;  /* Enable Preheat tool boosting */
+        int preheat_tool_boost;            /* Priority boost (100 = 1.0x, 150 = 1.5x) */
         gboolean enable_time_learning;  /* Enable time-of-day patterns */
         
         char *manual_apps_list;         /* Path to manual apps file */
         char *blacklist;                /* Path to blacklist file */
-    } kali;
+    } preheat;
 #endif
     
 } kp_conf_t;

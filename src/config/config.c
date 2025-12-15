@@ -184,9 +184,9 @@ kp_config_load(const char *conffile, gboolean fail)
     g_free(kp_conf->system.manualapps);
     g_strfreev(kp_conf->system.manual_apps_loaded);
     
-#ifdef ENABLE_KALI_EXTENSIONS
-    g_free(kp_conf->kali.manual_apps_list);
-    g_free(kp_conf->kali.blacklist);
+#ifdef ENABLE_PREHEAT_EXTENSIONS
+    g_free(kp_conf->preheat.manual_apps_list);
+    g_free(kp_conf->preheat.blacklist);
 #endif
     
     /* Copy new configuration */
@@ -195,12 +195,12 @@ kp_config_load(const char *conffile, gboolean fail)
     /* Load manual apps from file */
     load_manual_apps_file(kp_conf);
     
-#ifdef ENABLE_KALI_EXTENSIONS
-    if (kp_conf->kali.enable_kali_scoring) {
-        g_message("Kali scoring extensions ENABLED (boost: %.2fx)", 
-                  kp_conf->kali.kali_tool_boost / 100.0);
+#ifdef ENABLE_PREHEAT_EXTENSIONS
+    if (kp_conf->preheat.enable_preheat_scoring) {
+        g_message("Preheat scoring extensions ENABLED (boost: %.2fx)", 
+                  kp_conf->preheat.preheat_tool_boost / 100.0);
     }
-    if (kp_conf->kali.enable_time_learning) {
+    if (kp_conf->preheat.enable_time_learning) {
         g_message("Time-of-day learning ENABLED");
     }
 #endif

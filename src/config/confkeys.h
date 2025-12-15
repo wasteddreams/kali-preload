@@ -28,13 +28,13 @@ confkey(system,	integer,	maxprocs,	     30,	processes)
 confkey(system,	enum,		sortstrategy,	      3,	-)
 confkey(system,	string,		manualapps,	   NULL,	-)
 
-/* KALI EXTENSIONS (opt-in, only active if --enable-kali-extensions) */
+/* PREHEAT EXTENSIONS (opt-in, only active if --enable-preheat-extensions) */
 
-#ifdef ENABLE_KALI_EXTENSIONS
-/* [kali] section */
-confkey(kali,	boolean,	enable_kali_scoring,	false,	-)
-confkey(kali,	integer,	kali_tool_boost,	  100,	percent_times_100)
-confkey(kali,	boolean,	enable_time_learning,	false,	-)
-confkey(kali,	string,		manual_apps_list,	 NULL,	-)
-confkey(kali,	string,		blacklist,		 NULL,	-)
+#ifdef ENABLE_PREHEAT_EXTENSIONS
+/* [preheat] section */
+confkey(preheat,	boolean,	enable_preheat_scoring,	false,	-)
+confkey(preheat,	integer,	preheat_tool_boost,	  100,	percent_times_100)
+confkey(preheat,	boolean,	enable_time_learning,	false,	-)
+confkey(preheat,	string,		manual_apps_list,	 NULL,	-)
+confkey(preheat,	string,		blacklist,		 NULL,	-)
 #endif

@@ -40,7 +40,7 @@ static void
 print_version(void)
 {
     printf("%s %s\n", PACKAGE, VERSION);
-    printf("Adaptive readahead daemon for Kali Linux\n");
+    printf("Adaptive readahead daemon for Debian-based distributions\n");
     printf("Based on the preload daemon\n\n");
     printf("Copyright (C) 2025 Preheat Contributors\n");
     printf("This is free software; see the source for copying conditions.\n");
@@ -50,7 +50,7 @@ static void
 print_help(void)
 {
     printf("Usage: %s [OPTIONS]\n\n", PACKAGE);
-    printf("Adaptive readahead daemon for Kali Linux\n\n");
+    printf("Adaptive readahead daemon for Debian-based distributions\n\n");
     printf("Options:\n");
     printf("  -c, --conffile FILE    Configuration file (default: %s)\n", DEFAULT_CONFFILE);
     printf("  -s, --statefile FILE   State file (default: %s)\n", DEFAULT_STATEFILE);

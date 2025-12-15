@@ -53,7 +53,7 @@ make
 Expected output:
 ```
 preheat 0.1.0
-Adaptive readahead daemon for Kali Linux
+Adaptive readahead daemon for Debian-based distributions
 Based on the preload daemon
 ```
 

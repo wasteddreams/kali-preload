@@ -128,29 +128,29 @@ sortstrategy = 3
 
 ###########################################################################
 
-[kali]
+[preheat]
 
-# Kali-specific extensions (require --enable-kali-extensions build flag)
+# Preheat extensions (require --enable-preheat-extensions build flag)
 
-# enable_kali_scoring:
+# enable_preheat_scoring:
 #
-# Enable Kali-specific scoring enhancements for security tools.
-# Has no effect unless built with --enable-kali-extensions.
+# Enable Preheat-specific scoring enhancements for frequently used tools.
+# Has no effect unless built with --enable-preheat-extensions.
 #
 # default: false
-enable_kali_scoring = false
+enable_preheat_scoring = false
 
-# kali_tool_boost:
+# preheat_tool_boost:
 #
-# Priority multiplier for known Kali security tools (when enabled).
+# Priority multiplier for known priority tools (when enabled).
 #
 # default: 1.0 (no boost); set to 1.5 for 50% priority boost
-kali_tool_boost = 1.0
+preheat_tool_boost = 1.0
 
 # enable_time_learning:
 #
 # Enable time-of-day usage pattern learning.
-# Has no effect unless built with --enable-kali-extensions.
+# Has no effect unless built with --enable-preheat-extensions.
 #
 # default: false
 enable_time_learning = false
@@ -170,3 +170,4 @@ manual_apps_list = /etc/preheat.d/apps.list
 #
 # default: /etc/preheat.d/blacklist
 blacklist = /etc/preheat.d/blacklist
+

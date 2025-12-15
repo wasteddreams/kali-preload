@@ -9,23 +9,23 @@ AC_CONFIG_HEADERS(config.h)
 AM_INIT_AUTOMAKE([foreign subdir-objects -Wall -Wno-portability])
 AC_GNU_SOURCE
 
-PACKAGE_SUMMARY="Adaptive readahead daemon for Kali Linux"
+PACKAGE_SUMMARY="Adaptive readahead daemon for Debian-based distributions"
 AC_SUBST(PACKAGE_SUMMARY)
 
 ## Build options
 
-# Kali-specific extensions (disabled by default for compatibility)
-AC_ARG_ENABLE([kali-extensions],
-    AS_HELP_STRING([--enable-kali-extensions],
-        [Enable Kali-specific scoring and prediction extensions (default: no)]),
-    [enable_kali_extensions=$enableval],
-    [enable_kali_extensions=no])
+# Preheat extensions (disabled by default for compatibility)
+AC_ARG_ENABLE([preheat-extensions],
+    AS_HELP_STRING([--enable-preheat-extensions],
+        [Enable Preheat scoring and prediction extensions (default: no)]),
+    [enable_preheat_extensions=$enableval],
+    [enable_preheat_extensions=no])
 
-if test "x$enable_kali_extensions" = "xyes"; then
-    AC_DEFINE([ENABLE_KALI_EXTENSIONS], [1],
-        [Define to 1 to enable Kali-specific extensions])
+if test "x$enable_preheat_extensions" = "xyes"; then
+    AC_DEFINE([ENABLE_PREHEAT_EXTENSIONS], [1],
+        [Define to 1 to enable Preheat extensions])
 fi
-AM_CONDITIONAL([ENABLE_KALI_EXTENSIONS], [test "x$enable_kali_extensions" = "xyes"])
+AM_CONDITIONAL([ENABLE_PREHEAT_EXTENSIONS], [test "x$enable_preheat_extensions" = "xyes"])
 
 # Debug mode
 AC_ARG_ENABLE([debug],
@@ -130,7 +130,7 @@ Preheat $VERSION configuration:
   C compiler:          ${CC}
   CFLAGS:              ${CFLAGS}
   
-  Kali extensions:     ${enable_kali_extensions}
+  Preheat extensions:  ${enable_preheat_extensions}
   Debug mode:          ${enable_debug}
   
   State directory:     ${pkglocalstatedir}

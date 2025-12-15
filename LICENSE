@@ -20,7 +20,7 @@ your programs, too.
 
 [... standard GPL v2 text continues ...]
 
-Preheat - Adaptive readahead daemon for Kali Linux
+Preheat - Adaptive readahead daemon for Debian-based distributions
 Copyright (C) 2025 Preheat Contributors
 Based on the preload daemon
 
