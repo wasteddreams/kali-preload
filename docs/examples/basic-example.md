@@ -6,7 +6,7 @@ A step-by-step walkthrough for new users.
 
 ## Scenario
 
-You have a Kali Linux laptop with a mechanical hard drive. Applications like Firefox, VS Code, and Burp Suite take several seconds to start. You want to speed up your daily workflow.
+You have a laptop with a mechanical hard drive or SATA SSD. Applications like Firefox, VS Code, and other tools take several seconds to start. You want to speed up your daily workflow.
 
 ---
 

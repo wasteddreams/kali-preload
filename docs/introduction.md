@@ -109,35 +109,33 @@ Understanding limitations is as important as understanding capabilities:
 
 ### Operating Systems
 
-| Distribution | Support Level |
-|--------------|---------------|
-| Kali Linux | Primary target, fully tested |
-| Debian 11+ | Fully supported |
-| Ubuntu 20.04+ | Fully supported |
-| Linux Mint | Supported |
-| Other Debian-based | Should work, less tested |
+Preheat works on any Debian-based Linux distribution:
+- Debian 11+
+- Ubuntu 20.04+
+- Linux Mint
+- Other apt-based distributions
 
 ### Hardware Requirements
 
 | Component | Minimum | Recommended |
 |-----------|---------|-------------|
-| RAM | 2 GB | 4+ GB |
-| Storage | Any | HDD benefits most |
+| RAM | 2 GB | 4+ GB (more headroom for caching) |
+| Storage | Any | Slower storage benefits most |
 | Kernel | 2.6+ | 4.0+ |
 
 ### When Preheat Helps Most
 
-- **Mechanical hard drives (HDD)**: Highest benefit due to slow random I/O
-- **Limited RAM systems**: Where disk cache is frequently evicted
-- **Repetitive workflows**: Predictable application usage patterns
-- **Desktop/laptop use**: Interactive workloads with launch patterns
+- **Slower storage** (HDD, SATA SSD) with **unused RAM sitting idle**
+- **Repetitive workflows** — launching the same apps daily
+- **Older hardware** where cold starts feel noticeably slow
+- **Desktop/laptop use** with predictable launch patterns
 
 ### When Preheat Helps Less
 
-- **High-RAM systems (16+ GB)**: OS already caches most things
-- **NVMe SSDs**: Already very fast startup times
-- **Servers**: Usually run persistent services, not interactive apps
-- **Random workloads**: Unpredictable usage defeats prediction
+- **Fast NVMe storage** — already quick startup times
+- **Very limited RAM** (<2 GB) — no headroom for caching
+- **Server workloads** — persistent services, not interactive apps
+- **Random usage patterns** — unpredictable usage defeats prediction
 
 ---
 

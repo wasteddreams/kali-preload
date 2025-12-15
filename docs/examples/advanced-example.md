@@ -124,9 +124,9 @@ exeprefix = /usr/;!/
 
 ---
 
-## Scenario 3: Security Testing (Kali Linux)
+## Scenario 3: Security/Pentesting Workstation
 
-**System:** Kali Linux, mixed tools, HDD
+**System:** Linux with security tools, HDD
 
 **Goals:**
 - Preload common security tools
@@ -167,7 +167,7 @@ manualapps = /etc/preheat.d/kali-tools.list
 
 ```bash
 # /etc/preheat.d/kali-tools.list
-# Kali Linux priority tools
+# Security tools priority list
 
 # Browsers
 /usr/bin/firefox-esr

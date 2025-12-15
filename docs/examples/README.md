@@ -27,7 +27,7 @@ See the [Advanced Example](advanced-example.md) for:
 - SSD configuration
 - Low-memory systems
 - Developer workstations
-- Kali Linux security testing
+- Security/pentesting workstation
 - Custom whitelists and blacklists
 - Monitoring scripts
 

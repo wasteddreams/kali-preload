@@ -5,53 +5,56 @@ title: Preheat Documentation
 
 # Preheat Documentation
 
-Preheat is an adaptive readahead daemon for Linux that learns your application usage patterns and preloads frequently used programs into memory, reducing startup times by 30-60%.
+> **Adaptive readahead daemon for Linux**  
+> Learns your application usage patterns and preloads frequently used programs into memory, reducing startup times by 30-60%.
 
 ---
 
-## Getting Started
+## 🚀 Getting Started
 
 | Guide | Description |
-|-------|-------------|
-| [Introduction](introduction.md) | What preheat is and why it exists |
-| [Installation](installation.md) | System requirements and setup |
-| [Quick Start](quick-start.md) | Get running in 5 minutes |
+|:------|:------------|
+| [**Introduction**](introduction.md) | What preheat is and why it exists |
+| [**Installation**](installation.md) | System requirements and setup |
+| [**Quick Start**](quick-start.md) | Get running in 5 minutes |
 
 ---
 
-## Understanding Preheat
+## 📖 Understanding Preheat
 
 | Guide | Description |
-|-------|-------------|
-| [How It Works](how-it-works.md) | Monitoring, prediction, and preloading |
-| [Architecture](architecture.md) | Internal design and data flow |
+|:------|:------------|
+| [**How It Works**](how-it-works.md) | Monitoring, prediction, and preloading cycle |
+| [**Architecture**](architecture.md) | Internal design and data flow |
 
 ---
 
-## Configuration & Usage
+## ⚙️ Configuration & Usage
 
 | Guide | Description |
-|-------|-------------|
-| [Configuration](configuration.md) | Complete configuration reference |
-| [Advanced Usage](advanced-usage.md) | Tuning, debugging, and optimization |
-| [API Reference](api-reference.md) | CLI commands and signals |
+|:------|:------------|
+| [**Configuration**](configuration.md) | Complete configuration reference |
+| [**Advanced Usage**](advanced-usage.md) | Tuning, debugging, and optimization |
+| [**API Reference**](api-reference.md) | CLI commands, signals, and file formats |
 
 ---
 
-## Help
+## 🛠️ Help & Examples
 
 | Guide | Description |
-|-------|-------------|
-| [Troubleshooting](troubleshooting.md) | Common problems and solutions |
-| [Examples](examples/) | Real-world configuration scenarios |
+|:------|:------------|
+| [**Troubleshooting**](troubleshooting.md) | Common problems and solutions |
+| [**Examples**](examples/) | Real-world configuration scenarios |
 
 ---
 
 ## Quick Links
 
-- **Repository**: [github.com/wasteddreams/preheat-linux](https://github.com/wasteddreams/preheat-linux)
-- **Issues**: [Report a bug](https://github.com/wasteddreams/preheat-linux/issues)
-- **License**: [GPL v2](../LICENSE)
+| Resource | Link |
+|:---------|:-----|
+| Repository | [github.com/wasteddreams/preheat-linux](https://github.com/wasteddreams/preheat-linux) |
+| Report Issues | [GitHub Issues](https://github.com/wasteddreams/preheat-linux/issues) |
+| License | [GPL v2](../LICENSE) |
 
 ---
 
