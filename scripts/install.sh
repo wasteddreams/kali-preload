@@ -60,20 +60,42 @@ check_dependencies() {
 build_project() {
     print_info "Building preheat..."
     
+    local LOG_FILE="/tmp/preheat-build-$$.log"
+    
     # Generate build system if needed
     if [[ ! -f configure ]]; then
-        print_info "Running autoreconf..."
-        autoreconf --install --force
+        printf "  ├─ Generating build system... "
+        if autoreconf --install --force > "$LOG_FILE" 2>&1; then
+            echo -e "${GREEN}done${NC}"
+        else
+            echo -e "${RED}failed${NC}"
+            print_error "autoreconf failed. See $LOG_FILE for details."
+            exit 1
+        fi
     fi
     
     # Configure if not already done
     if [[ ! -f Makefile ]]; then
-        print_info "Running configure..."
-        ./configure
+        printf "  ├─ Configuring... "
+        if ./configure >> "$LOG_FILE" 2>&1; then
+            echo -e "${GREEN}done${NC}"
+        else
+            echo -e "${RED}failed${NC}"
+            print_error "configure failed. See $LOG_FILE for details."
+            exit 1
+        fi
     fi
     
     # Build
-    make -j$(nproc)
+    printf "  └─ Compiling... "
+    if make -j$(nproc) >> "$LOG_FILE" 2>&1; then
+        echo -e "${GREEN}done${NC}"
+        rm -f "$LOG_FILE"  # Clean up on success
+    else
+        echo -e "${RED}failed${NC}"
+        print_error "Build failed. See $LOG_FILE for details."
+        exit 1
+    fi
     
     print_success "Build completed successfully"
 }
@@ -82,9 +104,17 @@ build_project() {
 install_project() {
     print_info "Installing preheat..."
     
-    # We set SKIP_SYSTEMD=1 to skip the automatic systemd setup
-    # as we'll handle it manually based on user preference
-    SKIP_SYSTEMD=1 make install
+    local LOG_FILE="/tmp/preheat-install-$$.log"
+    
+    printf "  └─ Installing files... "
+    if SKIP_SYSTEMD=1 make install > "$LOG_FILE" 2>&1; then
+        echo -e "${GREEN}done${NC}"
+        rm -f "$LOG_FILE"
+    else
+        echo -e "${RED}failed${NC}"
+        print_error "Installation failed. See $LOG_FILE for details."
+        exit 1
+    fi
     
     print_success "Files installed successfully"
 }
