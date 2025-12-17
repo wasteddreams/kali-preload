@@ -212,7 +212,7 @@ After running for a few days:
 ```bash
 # Dump comprehensive statistics
 sudo preheat-ctl dump
-sudo tail -200 /var/log/preheat.log
+sudo tail -200 /usr/local/var/log/preheat.log
 
 # See what would be predicted
 # Look for "tracked applications" entries
@@ -227,7 +227,7 @@ sudo tail -200 /var/log/preheat.log
 ```bash
 # What are you running most?
 # (Run this over a few days)
-grep "tracked applications" /var/log/preheat.log
+grep "tracked applications" /usr/local/var/log/preheat.log
 
 # Or check history
 history | awk '{print $2}' | sort | uniq -c | sort -rn | head -20
@@ -334,7 +334,7 @@ echo
 
 # Activity
 echo "Recent Activity:"
-sudo grep "running processes" /var/log/preheat.log | tail -5 | \
+sudo grep "running processes" /usr/local/var/log/preheat.log | tail -5 | \
     awk '{print "  " $0}'
 echo
 
@@ -370,7 +370,7 @@ preheat-ctl save
 Add to `~/.bashrc` or `~/.zshrc`:
 ```bash
 alias pstatus='sudo preheat-ctl status'
-alias pdump='sudo preheat-ctl dump && sudo tail -100 /var/log/preheat.log'
+alias pdump='sudo preheat-ctl dump && sudo tail -100 /usr/local/var/log/preheat.log'
 ```
 
 ---

@@ -13,7 +13,7 @@ Before tuning, understand your usage patterns:
 ```bash
 # What applications do you run most?
 sudo preheat-ctl dump
-sudo grep "tracked applications" /var/log/preheat.log
+sudo grep "tracked applications" /usr/local/var/log/preheat.log
 
 # How much memory is typically free?
 free -h
@@ -211,16 +211,16 @@ The log file contains detailed information:
 
 ```bash
 # View startup configuration
-sudo grep "# loaded configuration" -A 50 /var/log/preheat.log
+sudo grep "# loaded configuration" -A 50 /usr/local/var/log/preheat.log
 
 # View scanning activity
-sudo grep -E "running processes|tracked applications" /var/log/preheat.log | tail -20
+sudo grep -E "running processes|tracked applications" /usr/local/var/log/preheat.log | tail -20
 
 # View state saves
-sudo grep "saving state" /var/log/preheat.log
+sudo grep "saving state" /usr/local/var/log/preheat.log
 
 # View errors
-sudo grep -i "error\|fail\|cannot" /var/log/preheat.log
+sudo grep -i "error\|fail\|cannot" /usr/local/var/log/preheat.log
 ```
 
 ### State Dump Analysis
@@ -232,7 +232,7 @@ Force a state dump and analyze:
 sudo preheat-ctl dump
 
 # View dumped statistics
-sudo tail -100 /var/log/preheat.log
+sudo tail -100 /usr/local/var/log/preheat.log
 ```
 
 ### Memory Usage Monitoring
@@ -285,7 +285,7 @@ echo
 
 # Recent activity
 echo "Recent Activity (last 5 scans):"
-sudo grep "running processes" /var/log/preheat.log | tail -5
+sudo grep "running processes" /usr/local/var/log/preheat.log | tail -5
 ```
 
 ### Integration with Monitoring Systems
@@ -294,11 +294,11 @@ For Prometheus/Grafana, parse log metrics:
 
 ```bash
 # Tracked applications count
-grep "tracked applications" /var/log/preheat.log | tail -1 | \
+grep "tracked applications" /usr/local/var/log/preheat.log | tail -1 | \
     awk '{print $NF}'
 
 # Running processes seen
-grep "running processes" /var/log/preheat.log | tail -1 | \
+grep "running processes" /usr/local/var/log/preheat.log | tail -1 | \
     awk -F',' '{print $1}' | awk '{print $NF}'
 ```
 
@@ -358,7 +358,7 @@ Ensure proper permissions:
 sudo chmod 600 /var/lib/preheat/preheat.state
 
 # Log file  
-sudo chmod 640 /var/log/preheat.log
+sudo chmod 640 /usr/local/var/log/preheat.log
 
 # Config file
 sudo chmod 644 /etc/preheat.conf
@@ -447,7 +447,7 @@ dopredict = false   # Don't preload
 **Diagnosis:**
 ```bash
 # Check if predictions are being made
-sudo grep -i "readahead\|preload" /var/log/preheat.log | tail -20
+sudo grep -i "readahead\|preload" /usr/local/var/log/preheat.log | tail -20
 
 # Check if apps are in cache before launch
 vmtouch /usr/bin/your-app   # Requires vmtouch package

@@ -74,7 +74,7 @@ This installs:
 - `/usr/local/etc/logrotate.d/preheat.logrotate` - Log rotation
 
 Creates directories:
-- `/var/lib/preheat/` - State storage
+- `/usr/local/var/lib/preheat/` - State storage
 - `/var/log/` - Log files
 
 ---
@@ -148,7 +148,7 @@ Expected: "preheat is running"
 
 ### Check State File
 ```bash
-sudo ls -lh /var/lib/preheat/
+sudo ls -lh /usr/local/var/lib/preheat/
 ```
 
 Expected: `preheat.state` file created after first save
@@ -171,8 +171,8 @@ sudo make uninstall
 
 ### Remove State (Optional)
 ```bash
-sudo rm -rf /var/lib/preheat/
-sudo rm -f /var/log/preheat.log
+sudo rm -rf /usr/local/var/lib/preheat/
+sudo rm -f /usr/local/var/log/preheat.log
 ```
 
 ---
@@ -196,7 +196,7 @@ sudo preheat-ctl status
 **Check logs**:
 ```bash
 sudo journalctl -u preheat --no-pager
-sudo tail -100 /var/log/preheat.log
+sudo tail -100 /usr/local/var/log/preheat.log
 ```
 
 ### Systemd Hardening Issues
@@ -230,7 +230,7 @@ If migrating from preload:
 sudo cp /var/lib/preload/preload.state /var/lib/preload/preload.state.bak
 
 # Copy to preheat (will auto-migrate on first load)
-sudo cp /var/lib/preload/preload.state /var/lib/preheat/preheat.state
+sudo cp /var/lib/preload/preload.state /usr/local/var/lib/preheat/preheat.state
 
 # Start preheat
 sudo systemctl start preheat

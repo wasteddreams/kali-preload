@@ -46,7 +46,7 @@ preheat --self-test
 Check the log file to confirm normal operation:
 
 ```bash
-sudo tail -30 /var/log/preheat.log
+sudo tail -30 /usr/local/var/log/preheat.log
 ```
 
 **Healthy log output looks like:**
@@ -84,7 +84,7 @@ sudo preheat-ctl dump
 
 Then view:
 ```bash
-sudo tail -50 /var/log/preheat.log
+sudo tail -50 /usr/local/var/log/preheat.log
 ```
 
 ---
@@ -117,7 +117,7 @@ After at least an hour of normal use, check if predictions are happening:
 sudo preheat-ctl dump
 
 # Check the log for prediction activity  
-sudo grep -i "readahead\|preload\|predict" /var/log/preheat.log | tail -20
+sudo grep -i "readahead\|preload\|predict" /usr/local/var/log/preheat.log | tail -20
 ```
 
 You should see entries indicating file preloading activity.
@@ -135,7 +135,7 @@ You should see entries indicating file preloading activity.
 | Start service | `sudo systemctl start preheat` |
 | Stop service | `sudo systemctl stop preheat` |
 | Restart service | `sudo systemctl restart preheat` |
-| View live logs | `sudo tail -f /var/log/preheat.log` |
+| View live logs | `sudo tail -f /usr/local/var/log/preheat.log` |
 | Dump stats to log | `sudo preheat-ctl dump` |
 | Force save state | `sudo preheat-ctl save` |
 | Reload config | `sudo preheat-ctl reload` |

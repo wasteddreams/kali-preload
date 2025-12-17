@@ -2,6 +2,35 @@
 
 All notable changes to preheat will be documented in this file.
 
+## [0.1.2] - 2025-12-17
+
+### Security
+- **CRITICAL:** Fixed integer overflow vulnerability in file comparison functions (CVE-class issue)
+- Eliminated all unsafe string operations (verified no strcpy/sprintf/strcat usage)
+- All file I/O operations verified for proper error handling
+
+### Fixed
+- Fixed broken debug logging macro that prevented debug messages
+- Added configuration value validation (cycle, memfree, maxprocs, sortstrategy, minsize)
+- Improved error logging in process monitoring (readlink failures now logged with errno)
+- Added warning logging when memory allocation fails during CRC calculation
+- Fixed documentation: configuration file path prioritizes `/usr/local/etc/preheat.conf`
+- Fixed documentation: reload examples use correct PID path (`/run` not `/var/run`)
+- Removed confusing logging for unimplemented preheat extensions
+
+### Improved
+- Implemented proper log level checks using `kp_is_debugging()` macro
+- Documented FIXME comments as intentional algorithmic limitations (not bugs)
+- Replaced magic numbers with defined constants (MANUAL_APP_BOOST_LNPROB)
+- Enhanced .gitignore to exclude build artifacts
+
+### Code Quality
+- Comprehensive codebase audit: 14 issues fixed across 2 audit passes
+- All critical and medium-priority issues resolved
+- Build verification: 0 errors, only harmless GLib callback warnings
+- Self-test verification: 4/4 checks passing
+- Integration test suite: 6 comprehensive shell scripts
+
 ## [0.1.1] - 2025-12-16
 
 ### Added

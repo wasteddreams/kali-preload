@@ -35,7 +35,7 @@ Adaptive readahead daemon that learns application usage patterns and preloads pr
 |------|------------------|
 | Configuration | `/usr/local/etc/preheat.conf` |
 | State | `/usr/local/var/lib/preheat/preheat.state` |
-| Log | `/usr/local/var/log/preheat.log` |
+| Log | `/usr/local/usr/local/var/log/preheat.log` |
 | PID | `/run/preheat.pid` |
 
 ### Examples
@@ -141,12 +141,12 @@ sudo preheat-ctl dump
 ```
 
 **Effect:**
-- Writes tracking statistics to `/var/log/preheat.log`
+- Writes tracking statistics to `/usr/local/var/log/preheat.log`
 - Useful for debugging and monitoring
 
 **To view dumped data:**
 ```bash
-sudo tail -100 /var/log/preheat.log
+sudo tail -100 /usr/local/var/log/preheat.log
 ```
 
 **Equivalent signal:** SIGUSR1
@@ -346,7 +346,7 @@ sudo preheat -f
 ### Location
 
 ```
-/var/log/preheat.log
+/usr/local/var/log/preheat.log
 ```
 
 ### Entry Format
