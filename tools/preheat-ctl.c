@@ -56,6 +56,8 @@
 #include <limits.h>  /* For PATH_MAX */
 #include <sys/stat.h>
 #include <math.h>    /* For exp() */
+#include <libgen.h>  /* For basename() */
+#include <glib.h>    /* For GLib utilities */
 
 /* File paths for daemon communication */
 #define PIDFILE "/var/run/preheat.pid"
@@ -67,6 +69,9 @@
 
 /* Forward declarations */
 static const char *resolve_app_name(const char *name, char *buffer, size_t bufsize);
+static char *uri_to_path(const char *uri);
+static gboolean is_uri(const char *str);
+static gboolean paths_match(const char *search_path, const char *state_path);
 
 /**
  * Print usage information and available commands
@@ -857,8 +862,8 @@ cmd_explain(const char *app_name)
                        &seq, &update_time, &run_time, &expansion, 
                        &weighted, &raw, &size, &pool_val, path) >= 9) {
                 
-                /* Check if this is our app */
-                if (strstr(path, final_name) || strcmp(path, final_name) == 0) {
+                /* Check if this is our app using robust path matching */
+                if (paths_match(final_name, path)) {
                     found = 1;
                     weighted_launches = weighted;
                     raw_launches = raw;
@@ -874,15 +879,86 @@ cmd_explain(const char *app_name)
     fclose(f);
     
     if (!found) {
+        /* P1 Feature: Fuzzy search for similar apps */
+        GPtrArray *similar = g_ptr_array_new_with_free_func(g_free);
+        char *search_copy = g_strdup(final_name);
+        char *search_basename = g_strdup(basename(search_copy));
+        g_free(search_copy);
+        
+        /* Second pass: find apps with matching basename */
+        f = fopen(STATEFILE, "r");
+        if (!f) {
+            f = fopen("/var/lib/preheat/preheat.state", "r");
+        }
+        
+        if (f) {
+            while (fgets(line, sizeof(line), f)) {
+                if (strncmp(line, "EXE\t", 4) == 0) {
+                    char path[512];
+                    int seq, update_time, run_time, expansion;
+                    unsigned long raw, size;
+                    double weighted;
+                    int pool_val;
+                    
+                    if (sscanf(line, "EXE\t%d\t%d\t%d\t%d\t%lf\t%lu\t%lu\t%d\t%511s",
+                               &seq, &update_time, &run_time, &expansion,
+                               &weighted, &raw, &size, &pool_val, path) >= 9) {
+                        
+                        /* Convert URI if needed */
+                        char *path_plain = is_uri(path) ? uri_to_path(path) : g_strdup(path);
+                        if (path_plain) {
+                            char *path_copy = g_strdup(path_plain);
+                            char *path_basename = g_strdup(basename(path_copy));
+                            g_free(path_copy);
+                            
+                            /* Check if basenames are similar (substring match) */
+                            if (strstr(path_basename, search_basename) || 
+                                strstr(search_basename, path_basename)) {
+                                /* Add to suggestions if not already there */
+                                gboolean already_added = FALSE;
+                                for (guint i = 0; i < similar->len; i++) {
+                                    if (strcmp(g_ptr_array_index(similar, i), path_plain) == 0) {
+                                        already_added = TRUE;
+                                        break;
+                                    }
+                                }
+                                if (!already_added && similar->len < 5) {
+                                    g_ptr_array_add(similar, g_strdup(path_plain));
+                                }
+                            }
+                            
+                            g_free(path_basename);
+                            g_free(path_plain);
+                        }
+                    }
+                }
+            }
+            fclose(f);
+        }
+        
+        /* Display "not found" message */
         printf("\n  App: %s\n", final_name);
         printf("  %s\n\n", "═══════════════════════════════════════");
         printf("  Status:  ❌ NOT TRACKED\n\n");
         printf("  This application has never been launched while\n");
         printf("  the preheat daemon was running.\n\n");
+        
+        /* Show suggestions if we found similar apps */
+        if (similar->len > 0) {
+            printf("  Did you mean:\n");
+            for (guint i = 0; i < similar->len; i++) {
+                printf("    - %s\n", (char*)g_ptr_array_index(similar, i));
+            }
+            printf("\n");
+        }
+        
         printf("  To start tracking:\n");
         printf("    1. Launch the application\n");
         printf("    2. Wait for preheat to learn your usage patterns\n");
         printf("    3. Run this command again to see predictions\n\n");
+        
+        g_free(search_basename);
+        g_ptr_array_free(similar, TRUE);
         return 0;
     }
     
@@ -1627,6 +1703,103 @@ remove_from_config_file(const char *filepath, const char *entry)
     }
 
     return 0;
+}
+
+/* ========================================================================
+ * PATH MATCHING UTILITIES
+ * ========================================================================
+ * These functions handle the complexity of matching user-provided app names
+ * against state file entries, which are stored as file:// URIs.
+ * ======================================================================== */
+
+/**
+ * Convert file:// URI to plain filesystem path
+ * Returns newly allocated string (caller must free) or NULL on error
+ */
+static char *
+uri_to_path(const char *uri)
+{
+    if (!uri) return NULL;
+    
+    /* GLib's g_filename_from_uri handles URL decoding and validation */
+    return g_filename_from_uri(uri, NULL, NULL);
+}
+
+/**
+ * Check if string is a file:// URI
+ */
+static gboolean
+is_uri(const char *str)
+{
+    return str && g_str_has_prefix(str, "file://");
+}
+
+/**
+ * Check if two paths match, handling URIs, basenames, and partial paths
+ * 
+ * Matching layers (in order):
+ *  1. Exact match - fastest path
+ *  2. Substring match - handles partial paths
+ *  3. Basename match - handles different install locations
+ *
+ * @param search_path  Path user is searching for (plain path)
+ * @param state_path   Path from state file (might be URI)
+ * @return TRUE if paths refer to same file
+ */
+static gboolean
+paths_match(const char *search_path, const char *state_path)
+{
+    char *state_plain = NULL;
+    char *search_basename = NULL;
+    char *state_basename = NULL;
+    gboolean match = FALSE;
+    
+    if (!search_path || !state_path) {
+        return FALSE;
+    }
+    
+    /* Convert URI to plain path if needed */
+    if (is_uri(state_path)) {
+        state_plain = uri_to_path(state_path);
+        if (!state_plain) return FALSE;
+    } else {
+        state_plain = g_strdup(state_path);
+    }
+    
+    /* Layer 1: Exact match (fastest) */
+    if (strcmp(search_path, state_plain) == 0) {
+        match = TRUE;
+        goto cleanup;
+    }
+    
+    /* Layer 2: Substring match (for partial paths like "bin/antigravity") */
+    if (strstr(state_plain, search_path) || strstr(search_path, state_plain)) {
+        match = TRUE;
+        goto cleanup;
+    }
+    
+    /* Layer 3: Basename match (handles "firefox" vs "/usr/lib/firefox") */
+    {
+        char *search_copy = g_strdup(search_path);
+        char *state_copy = g_strdup(state_plain);
+        
+        search_basename = g_strdup(basename(search_copy));
+        state_basename = g_strdup(basename(state_copy));
+        
+        g_free(search_copy);
+        g_free(state_copy);
+    }
+    
+    if (strcmp(search_basename, state_basename) == 0) {
+        match = TRUE;
+        goto cleanup;
+    }
+    
+cleanup:
+    g_free(state_plain);
+    g_free(search_basename);
+    g_free(state_basename);
+    return match;
 }
 
 /**
