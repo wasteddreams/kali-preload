@@ -821,7 +821,16 @@ cmd_explain(const char *app_name)
         f = fopen("/var/lib/preheat/preheat.state", "r");
         if (!f) {
             fprintf(stderr, "Error: Cannot read state file\n");
-            fprintf(stderr, "The daemon may not be running or state file doesn't exist.\n");
+            
+            /* Check if it's a permissions issue */
+            if (access(STATEFILE, F_OK) == 0 || access("/var/lib/preheat/preheat.state", F_OK) == 0) {
+                fprintf(stderr, "\n");
+                fprintf(stderr, "The state file exists but you don't have permission to read it.\n");
+                fprintf(stderr, "Try running with sudo:\n\n");
+                fprintf(stderr, "    sudo preheat-ctl explain %s\n\n", app_name);
+            } else {
+                fprintf(stderr, "The daemon may not be running or state file doesn't exist.\n");
+            }
             return 1;
         }
     }
