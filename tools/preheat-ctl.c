@@ -1061,11 +1061,7 @@ cmd_explain(const char *app_name)
     } else {
         printf("❌ Not Preloaded\n");
         printf("    This app doesn't exceed the threshold (%.2f < 0.30)\n", combined);
-        if (hours_ago > 48.0) {
-            printf("    Reason: Not used recently (%.0f hours ago)\n", hours_ago);
-        } else {
-            printf("    Reason: Insufficient usage frequency\n");
-        }
+        printf("    Reason: Insufficient usage frequency\n");
         printf("\n  Recommendation:\n");
         printf("    Launch this app more frequently to increase its priority.\n");
     }
