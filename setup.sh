@@ -45,7 +45,13 @@ spinner() {
     local spinstr='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
     local i=0
     
-    while kill -0 $pid 2>/dev/null; do
+    # Check pid is valid before entering loop
+    if [ -z "$pid" ]; then
+        printf "\r${GREEN}[OK]${NC} ${msg}... ${GREEN}done${NC}\n"
+        return
+    fi
+    
+    while kill -0 "$pid" 2>/dev/null; do
         local temp=${spinstr:i++%${#spinstr}:1}
         printf "\r${CYAN}${temp}${NC} ${msg}..."
         sleep 0.1
@@ -58,8 +64,19 @@ progress_bar() {
     local current=$1
     local total=$2
     local width=40
-    local percent=$((current * 100 / total))
-    local filled=$((current * width / total))
+    local percent=0
+    local filled=0
+    
+    # Prevent division by zero
+    if [ "$total" -gt 0 ]; then
+        percent=$((current * 100 / total))
+        filled=$((current * width / total))
+    fi
+    
+    # Ensure filled is not negative
+    if [ "$filled" -lt 0 ]; then
+        filled=0
+    fi
     
     printf "\r${CYAN}Progress:${NC} ["
     printf "%${filled}s" | tr ' ' '█'
@@ -247,12 +264,15 @@ echo ""
 # Step 1: Locate source
 echo -e "${CYAN}${BOLD}[1/4]${NC} Locating source code..."
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" || {
+    echo -e "${RED}  [X] Failed to determine script directory${NC}"
+    exit 1
+}
 USE_LOCAL=false
 SOURCE_DIR=""
 CLEANUP_DIR=""
 
-if [ -f "$SCRIPT_DIR/configure.ac" ] && grep -q "preheat" "$SCRIPT_DIR/configure.ac" 2>/dev/null; then
+if [ -r "$SCRIPT_DIR/configure.ac" ] && grep -q "preheat" "$SCRIPT_DIR/configure.ac" 2>/dev/null; then
     USE_LOCAL=true
     SOURCE_DIR="$SCRIPT_DIR"
     echo -e "${GREEN}  [OK] Using local repository${NC} ${DIM}($SOURCE_DIR)${NC}"
@@ -279,12 +299,16 @@ else
     fi
     
     SOURCE_DIR="$TMPDIR/preheat"
-    COMMIT=$(cd "$SOURCE_DIR" && git rev-parse --short HEAD)
+    COMMIT=$(cd "$SOURCE_DIR" 2>/dev/null && git rev-parse --short HEAD 2>/dev/null || echo "unknown")
     echo -e "${GREEN}  [OK] Downloaded${NC} ${DIM}(commit: $COMMIT)${NC}"
 fi
 echo ""
 
-cd "$SOURCE_DIR"
+cd "$SOURCE_DIR" || {
+    echo -e "${RED}  [X] Failed to enter source directory${NC}"
+    [ -n "$CLEANUP_DIR" ] && rm -rf "$CLEANUP_DIR"
+    exit 1
+}
 
 # Step 2: Build
 echo -e "${CYAN}${BOLD}[2/4]${NC} Building from source..."
