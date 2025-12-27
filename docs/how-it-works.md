@@ -9,24 +9,24 @@ This document explains the operational principles of preheat—how it monitors, 
 Preheat operates in a continuous cycle:
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
+┌──────────────────────────────────────────────────────────────────┐
 │                     PREHEAT OPERATION CYCLE                      │
 │                                                                  │
 │    Every 20 seconds (configurable):                              │
 │                                                                  │
-│    ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐ │
-│    │  SCAN    │ -> │  LEARN   │ -> │ PREDICT  │ -> │ PRELOAD  │ │
-│    │          │    │          │    │          │    │          │ │
-│    │ Check    │    │ Update   │    │ Score    │    │ Read     │ │
-│    │ /proc    │    │ Markov   │    │ each     │    │ files    │ │
-│    │ for      │    │ chain    │    │ app's    │    │ into     │ │
-│    │ running  │    │ model    │    │ launch   │    │ memory   │ │
-│    │ apps     │    │          │    │ prob.    │    │ cache    │ │
-│    └──────────┘    └──────────┘    └──────────┘    └──────────┘ │
+│    ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐  │
+│    │  SCAN    │ -> │  LEARN   │ -> │ PREDICT  │ -> │ PRELOAD  │  │
+│    │          │    │          │    │          │    │          │  │
+│    │ Check    │    │ Update   │    │ Score    │    │ Read     │  │
+│    │ /proc    │    │ Markov   │    │ each     │    │ files    │  │
+│    │ for      │    │ chain    │    │ app's    │    │ into     │  │
+│    │ running  │    │ model    │    │ launch   │    │ memory   │  │
+│    │ apps     │    │          │    │ prob.    │    │ cache    │  │
+│    └──────────┘    └──────────┘    └──────────┘    └──────────┘  │
 │         │                                               │        │
 │         └───────────────────────────────────────────────┘        │
 │                          (repeat)                                │
-└─────────────────────────────────────────────────────────────────┘
+└──────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -346,15 +346,15 @@ Preheat reads:
 
 ```
 Kernel Page Cache
-┌────────────────────────────────────────┐
+┌───────────────────────────────────────┐
 │ ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐   │
 │ │ Page │ │ Page │ │ Page │ │ Page │...│
 │ │(file)│ │(file)│ │(anon)│ │(file)│   │
 │ └──────┘ └──────┘ └──────┘ └──────┘   │
-│                                        │
-│ Preheat adds file pages via readahead  │
-│ Kernel manages eviction automatically  │
-└────────────────────────────────────────┘
+│                                       │
+│ Preheat adds file pages via readahead │
+│ Kernel manages eviction automatically │
+└───────────────────────────────────────┘
 ```
 
 ### systemd Integration
