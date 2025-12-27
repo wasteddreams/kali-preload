@@ -29,6 +29,16 @@ preheat_SOURCES = \
 	readahead/readahead.h \
 	state/state.c \
 	state/state.h \
+	state/state_exe.c \
+	state/state_exe.h \
+	state/state_family.c \
+	state/state_family.h \
+	state/state_io.c \
+	state/state_io.h \
+	state/state_map.c \
+	state/state_map.h \
+	state/state_markov.c \
+	state/state_markov.h \
 	utils/logging.c \
 	utils/logging.h \
 	utils/crc32.c \
