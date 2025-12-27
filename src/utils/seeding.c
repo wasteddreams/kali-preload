@@ -21,6 +21,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <dirent.h>
+#include "desktop.h"
 
 /* Seed from XDG recently-used files */
 static int
@@ -175,6 +176,13 @@ kp_seed_from_desktop_times(void)
                 }
             }
             
+            /* FILTER: Skip shell wrapper scripts (e.g., kali-menu's exec-in-shell) */
+            if (strstr(full_path, "exec-in-shell") ||
+                strstr(full_path, "/usr/share/kali-menu/") ||
+                strstr(full_path, "/usr/share/legion/")) {
+                continue;  /* Skip wrapper scripts, we want the actual app */
+            }
+            
             /* Seed the app */
             kp_exe_t *exe = g_hash_table_lookup(kp_state->exes, full_path);
             if (!exe) {
@@ -255,8 +263,12 @@ kp_seed_from_shell_history(void)
         /* Check if exe already exists */
         exe = g_hash_table_lookup(kp_state->exes, full_path);
         if (!exe) {
+            /* FILTER: Only seed apps with .desktop files (skip CLI tools) */
+            if (!kp_desktop_has_file(full_path)) {
+                continue;  /* Skip CLI tools like grep, ls, exec-in-shell */
+            }
             exe = kp_exe_new(full_path, FALSE, NULL);
-            exe->pool = POOL_PRIORITY;  /* Shell commands are user-initiated */
+            exe->pool = POOL_PRIORITY;  /* Desktop apps are user-initiated */
             kp_state_register_exe(exe, FALSE);
         }
         
@@ -389,7 +401,8 @@ kp_seed_from_sources(void)
     by_source[1] = kp_seed_from_desktop_times();
     by_source[2] = kp_seed_from_shell_history();
     by_source[3] = kp_seed_from_browser_profiles();
-    by_source[4] = kp_seed_from_dev_tools();
+    /* Disabled: dev_tools are mostly CLI without .desktop files */
+    by_source[4] = 0;  /* kp_seed_from_dev_tools(); */
     by_source[5] = kp_seed_from_system_patterns();
     
     for (int i = 0; i < 6; i++) {
