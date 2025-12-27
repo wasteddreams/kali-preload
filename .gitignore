@@ -92,9 +92,9 @@ Makefile.in
 aclocal.m4
 compile
 config.guess
-config.h
-config.h.in
-config.log
+/config.h
+/config.h.in
+/config.log
 config.status
 config.sub
 configure
