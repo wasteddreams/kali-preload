@@ -10,7 +10,7 @@
 # unit: seconds
 # default: 20
 #
-cycle = 20
+cycle = 90
 
 # usecorrelation:
 #

@@ -117,6 +117,7 @@ typedef struct _process_info_t
     pid_t pid;                  /* Process ID */
     pid_t parent_pid;           /* Parent process ID */
     time_t start_time;          /* When process started (seconds since epoch) */
+    time_t last_weight_update;  /* For incremental weight calculation */
     gboolean user_initiated;    /* TRUE if started by user (shell/terminal/launcher) */
 } process_info_t;
 

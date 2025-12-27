@@ -133,7 +133,7 @@ kp_log_init(const char *logfile)
         if (0 > (nullfd = open("/dev/null", O_RDONLY)))
             g_error("cannot open %s: %s", "/dev/null", strerror(errno));
 
-        if (0 > (logfd = open(logfile, O_WRONLY | O_CREAT | O_APPEND, 0600)))
+        if (0 > (logfd = open(logfile, O_WRONLY | O_CREAT | O_APPEND, 0644)))
             g_error("cannot open %s: %s", logfile, strerror(errno));
 
         if ((dup2(nullfd, STDIN_FILENO) != STDIN_FILENO) ||
@@ -180,7 +180,7 @@ kp_log_reopen(const char *logfile)
     fflush(stdout);
     fflush(stderr);
 
-    if (0 > (logfd = open(logfile, O_WRONLY | O_CREAT | O_APPEND, 0600))) {
+    if (0 > (logfd = open(logfile, O_WRONLY | O_CREAT | O_APPEND, 0644))) {
         g_warning("cannot reopen %s: %s", logfile, strerror(errno));
         return;
     }

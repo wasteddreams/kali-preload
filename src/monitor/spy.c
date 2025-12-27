@@ -235,6 +235,7 @@ static void
 track_process_start(kp_exe_t *exe, pid_t pid, pid_t parent_pid)
 {
     process_info_t *proc_info;
+    time_t now = time(NULL);
     
     g_return_if_fail(exe);
     g_return_if_fail(exe->running_pids);
@@ -246,8 +247,14 @@ track_process_start(kp_exe_t *exe, pid_t pid, pid_t parent_pid)
     proc_info = g_new0(process_info_t, 1);
     proc_info->pid = pid;
     proc_info->parent_pid = parent_pid;
-    proc_info->start_time = time(NULL);
+    proc_info->start_time = now;
+    proc_info->last_weight_update = now;
     proc_info->user_initiated = is_user_initiated(parent_pid);
+    
+    /* Increment raw launch count immediately */
+    exe->raw_launches++;
+    g_debug("Launch detected: %s (pid %d, user: %s)",
+            exe->path, pid, proc_info->user_initiated ? "yes" : "no");
     
     g_hash_table_insert(exe->running_pids, GINT_TO_POINTER(pid), proc_info);
 }
@@ -257,13 +264,17 @@ track_process_start(kp_exe_t *exe, pid_t pid, pid_t parent_pid)
  *
  * @param exe  Executable structure
  * @param pid  Process ID that exited
+ *
+ * NOTE: This is called from clean_exited_pids_callback() which is used with
+ * g_hash_table_foreach_remove(). The hash table entry will be automatically
+ * removed when the callback returns TRUE, so we must NOT call g_hash_table_remove()
+ * here to avoid double-removal.
  */
 static void
 track_process_exit(kp_exe_t *exe, pid_t pid)
 {
     process_info_t *proc_info;
     time_t now, duration;
-    double weight;
     
     g_return_if_fail(exe);
     g_return_if_fail(exe->running_pids);
@@ -272,22 +283,17 @@ track_process_exit(kp_exe_t *exe, pid_t pid)
     if (!proc_info)
         return;  /* Not tracked, this is fine */
     
-    /* Calculate duration */
+    /* Weight already accumulated incrementally via update_running_weights() */
+    /* Just update duration tracking */
     now = time(NULL);
     duration = now - proc_info->start_time;
     if (duration < 0)
         duration = 0;  /* Clock skew protection */
     
-    /* Calculate weight */
-    weight = calculate_launch_weight(duration, proc_info->user_initiated);
-    
-    /* Update counters */
-    exe->weighted_launches += weight;
-    exe->raw_launches++;
     exe->total_duration_sec += (unsigned long)duration;
     
-    /* Remove from tracking */
-    g_hash_table_remove(exe->running_pids, GINT_TO_POINTER(pid));
+    /* NOTE: Do NOT remove from hash table here - it's done automatically by
+     * g_hash_table_foreach_remove() when clean_exited_pids_callback returns TRUE */
 }
 
 /**
@@ -340,6 +346,43 @@ clean_exited_pids(kp_exe_t *exe)
     g_return_if_fail(exe->running_pids);
     
     g_hash_table_foreach_remove(exe->running_pids, clean_exited_pids_callback, exe);
+}
+
+/**
+ * Update weighted_launches for all currently running processes
+ * Called each scan cycle to provide incremental weight accumulation.
+ */
+static void
+update_weight_for_pid(gpointer key, gpointer value, gpointer user_data)
+{
+    pid_t pid = GPOINTER_TO_INT(key);
+    process_info_t *proc_info = (process_info_t *)value;
+    kp_exe_t *exe = (kp_exe_t *)user_data;
+    time_t now = time(NULL);
+    time_t elapsed;
+    double incremental_weight;
+    
+    (void)pid;  /* Unused */
+    
+    elapsed = now - proc_info->last_weight_update;
+    if (elapsed <= 0)
+        return;  /* No time passed, skip */
+    
+    /* Calculate weight for this interval */
+    incremental_weight = calculate_launch_weight(elapsed, proc_info->user_initiated);
+    
+    /* Accumulate */
+    exe->weighted_launches += incremental_weight;
+    proc_info->last_weight_update = now;
+}
+
+static void
+update_running_weights(kp_exe_t *exe)
+{
+    g_return_if_fail(exe);
+    g_return_if_fail(exe->running_pids);
+    
+    g_hash_table_foreach(exe->running_pids, update_weight_for_pid, exe);
 }
 
 
@@ -500,12 +543,13 @@ kp_spy_scan(gpointer data)
     /* Figure out who's not running by checking their timestamp */
     g_slist_foreach(kp_state->running_exes, already_running_exe_callback_wrapper, data);
 
-    /* Clean up exited processes for weighted tracking (Enhancement #2) */
+    /* Update weights for running processes, then clean up exited ones */
     GHashTableIter iter;
     gpointer key, value;
     g_hash_table_iter_init(&iter, kp_state->exes);
     while (g_hash_table_iter_next(&iter, &key, &value)) {
         kp_exe_t *exe = (kp_exe_t *)value;
+        update_running_weights(exe);  /* Incremental weight update */
         clean_exited_pids(exe);
     }
 

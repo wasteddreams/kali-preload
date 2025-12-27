@@ -734,7 +734,7 @@ kp_config_load(const char *conffile, gboolean fail)
     if (kp_conf->model.cycle < 5 || kp_conf->model.cycle > 300) {
         g_warning("Invalid cycle value %d (must be 5-300), using default 20",
                   kp_conf->model.cycle);
-        kp_conf->model.cycle = 20;
+        kp_conf->model.cycle = 90;
     }
 
     if (kp_conf->model.memfree < 0 || kp_conf->model.memfree > 100) {
