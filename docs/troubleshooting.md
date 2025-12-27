@@ -290,7 +290,175 @@ free -h
 
 ---
 
-## Log File Issues
+## Application-Specific Issues (v1.0.0+)
+
+### Problem: Manual apps not being preloaded
+
+**Symptom:** Apps in `/etc/preheat.d/apps.list` aren't showing up in predictions or getting preloaded.
+
+**Diagnostics:**
+```bash
+# Check if manual apps were loaded
+sudo grep "manual app" /usr/local/var/log/preheat.log
+
+# Verify app is tracked
+sudo preheat-ctl stats | grep vim
+
+# Check prediction explicitly
+sudo preheat-ctl explain vim.basic
+```
+
+**Solutions:**
+
+1. **Config field mismatch:**
+   
+   In `/usr/local/etc/preheat.conf`, use the `system` section:
+   ```ini
+   [system]
+   manualapps = /etc/preheat.d/apps.list
+   ```
+   
+   **Not** `manual_apps_list` (that's a legacy field).
+
+2. **File doesn't exist or wrong permissions:**
+   ```bash
+   # Check file exists
+   ls -la /etc/preheat.d/apps.list
+   
+   # Fix permissions if needed
+   sudo chmod 644 /etc/preheat.d/apps.list
+   ```
+
+3. **Paths not absolute:**
+   
+   Apps list must contain absolute paths:
+   ```
+   # CORRECT:
+   /usr/bin/vim
+   /usr/bin/code
+   
+   # WRONG:
+   vim
+   ~/myapp
+   ```
+
+4. **Daemon not reloaded:**
+   ```bash
+   # After editing apps.list, reload
+   sudo preheat-ctl reload
+   
+   # Or restart
+   sudo systemctl restart preheat
+   ```
+
+5. **Maps not loading (check logs):**
+   ```bash
+   # Enable debug logging in preheat.conf
+   [system]
+   # loglevel = debug  # Not yet implemented
+   
+   # Check for map loading errors
+   sudo grep -i "load.*map\|manual" /usr/local/var/log/preheat.log | tail -20
+   ```
+
+**Expected behavior:**
+- Manual apps register at daemon startup
+- Maps loaded lazily during first prediction cycle
+- Always bypass 0.30 threshold (get `-10.0` boost)
+
+---
+
+### Problem: Launch counts seem wrong
+
+**Symptom:** `preheat-ctl stats` shows much higher `raw_launches` than expected.
+
+**Example:**
+```
+$ sudo preheat-ctl stats
+...
+45    code     18.2    12   priority   # I only opened VS Code once!
+```
+
+**This is usually NORMAL!** Here's why:
+
+**Cause 1: Multi-Process Applications**
+
+Modern apps (Electron, Chromium, Firefox) spawn multiple processes:
+```
+VS Code launch:
+  1 main process      → raw_launches++
+  5 renderer processes → raw_launches++ (×5)
+  1 GPU process        → raw_launches++
+  1 file watcher      → raw_launches++
+  
+  Total: 8 processes = 8 raw launches for ONE app start
+```
+
+**Why it's acceptable:**
+- `weighted_launches` uses logarithmic scaling
+- Short-lived helpers get 0.3x penalty (Issue #2)
+- Net result: ~1.5-2x inflation instead of 8x
+
+**Cause 2: Process Reuse Windows**
+
+Some apps open new windows without new processes:
+```
+firefox              # First window: counted ✅
+firefox -new-window  # Reuses process: NOT counted ❌
+```
+
+This is a [known limitation](known-limitations.md#1-process-reuse-not-detected).
+
+**Verification:**
+```bash
+# Check weighted vs raw
+sudo preheat-ctl explain code
+
+# Expected:
+#   Weighted Launches:  4.2
+#   Raw Launches:       8
+#   (weighted is ~50% of raw = logarithmic damping working)
+```
+
+**Action:** No fix needed - this is by design!
+
+---
+
+### Problem: App shows "NOT PRELOADED" despite high score
+
+**Symptom:**
+```
+$ sudo preheat-ctl explain firefox
+Decision: ❌ Not Preloaded
+  Reason: Insufficient usage frequency
+  Score: 0.28 (threshold: 0.30)
+```
+
+**Causes:**
+
+1. **Just below threshold:**
+   - Score of 0.28 vs 0.30 threshold
+   - Launch a few more times to cross threshold
+
+2. **Short-lived penalty kicking in:**
+   - If app crashes frequently (<5s runtime)
+   - Gets 0.3x penalty, lowering score
+   
+   **Solution:** Fix the crashes or add to manual apps list
+
+3. **Not enough usage history:**
+   - First 1-2 days have limited predictions
+   - Wait for more data or use manual apps
+
+**Workaround:** Add to manual apps for immediate preloading:
+```bash
+echo "/usr/bin/firefox" | sudo tee -a /etc/preheat.d/apps.list
+sudo preheat-ctl reload
+```
+
+---
+
+##Log File Issues
 
 ### Problem: Log file too large
 

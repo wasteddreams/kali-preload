@@ -84,7 +84,7 @@ State transitions recorded:
 - Recent observations have more weight
 - The model adapts as habits change
 
-**Weighted Launch Counting (v1.1.0+):**
+**Weighted Launch Counting (v1.0.0+):**
 
 Preheat uses sophisticated launch counting to accurately track application usage:
 

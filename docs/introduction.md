@@ -143,7 +143,7 @@ Preheat works on any Debian-based Linux distribution:
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                      PREHEAT DAEMON                      │
+│                      PREHEAT DAEMON                     │
 ├────────────────┬────────────────┬───────────────────────┤
 │   MONITORING   │   PREDICTION   │      PRELOADING       │
 │                │                │                       │
