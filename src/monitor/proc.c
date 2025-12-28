@@ -317,19 +317,19 @@ kp_proc_foreach(GHFunc func, gpointer user_data)
 
             /* Debug: Log snap paths being processed */
             if (g_str_has_prefix(exe_buffer, "/snap/")) {
-                g_debug("Found snap process: pid=%d path=%s", pid, exe_buffer);
+                g_message("SNAP DEBUG: Found snap process pid=%d path=%s", pid, exe_buffer);
             }
 
             if (!sanitize_file(exe_buffer)) {
                 if (g_str_has_prefix(exe_buffer, "/snap/")) {
-                    g_debug("Snap process %d rejected by sanitize_file", pid);
+                    g_message("SNAP DEBUG: Process %d rejected by sanitize_file", pid);
                 }
                 continue;
             }
             
             if (!accept_file(exe_buffer, kp_conf->system.exeprefix)) {
                 if (g_str_has_prefix(exe_buffer, "/snap/")) {
-                    g_debug("Snap process %d rejected by exeprefix filter: %s", pid, exe_buffer);
+                    g_message("SNAP DEBUG: Process %d rejected by exeprefix filter: %s", pid, exe_buffer);
                 }
                 continue;
             }
