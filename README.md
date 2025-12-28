@@ -69,6 +69,9 @@ preheat-ctl status
 
 ---
 
+> [!WARNING]
+> **Snap applications are NOT supported.** Ubuntu's snap packages (Firefox, Chromium, etc.) run in an AppArmor sandbox that blocks the daemon from tracking them. If you use Ubuntu 22.04+, consider installing apps via `apt` or Flatpak instead. See [Known Limitations](docs/known-limitations.md) for details.
+
 ## Essential Commands
 
 ```bash
