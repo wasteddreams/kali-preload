@@ -609,7 +609,7 @@ set_default_conf(kp_conf_t *conf)
 #define default_integer(def, unit) (unit * def)
 #define default_boolean(def, unit) def
 #define default_enum(def, unit) def
-#define default_string(def, unit) NULL
+#define default_string(def, unit) (def ? g_strdup(def) : NULL)
 #define default_string_list(def, unit) NULL
 #define confkey(grp, type, key, def, unit) \
     conf->grp.key = default_##type (def, unit);
