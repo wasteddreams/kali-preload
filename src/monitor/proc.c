@@ -329,7 +329,7 @@ kp_proc_foreach(GHFunc func, gpointer user_data)
                             
                             /* Only proceed if we got a valid path starting with / */
                             if (exe_buffer[0] == '/') {
-                                g_message("SNAP WORKAROUND: Using cmdline for pid=%d: %s", pid, exe_buffer);
+                                g_debug("Snap fallback: using cmdline for pid %d", pid);
                                 goto process_exe;  /* Skip to processing */
                             }
                         }
@@ -346,35 +346,11 @@ kp_proc_foreach(GHFunc func, gpointer user_data)
             exe_buffer[len] = '\0';
 
 process_exe:
-            /* Log every snap path to trace the flow */
-            if (g_str_has_prefix(exe_buffer, "/snap/")) {
-                g_message("SNAP DEBUG: At process_exe pid=%d path=%s", pid, exe_buffer);
-            }
-            
-            /* Log first 20 chars of every path to verify we're scanning */
-            static int scan_count = 0;
-            if (scan_count++ % 50 == 0) {
-                g_message("PROC DEBUG: Scanning pid=%d path=%.40s...", pid, exe_buffer);
-            }
-
-            /* Debug: Log snap paths being processed - BEFORE filters */
-            if (g_str_has_prefix(exe_buffer, "/snap/")) {
-                g_message("SNAP DEBUG: Checking filters for pid=%d path=%s", pid, exe_buffer);
-            }
-
-            if (!sanitize_file(exe_buffer)) {
-                if (g_str_has_prefix(exe_buffer, "/snap/")) {
-                    g_message("SNAP DEBUG: Process %d rejected by sanitize_file", pid);
-                }
+            if (!sanitize_file(exe_buffer))
                 continue;
-            }
             
-            if (!accept_file(exe_buffer, kp_conf->system.exeprefix)) {
-                if (g_str_has_prefix(exe_buffer, "/snap/")) {
-                    g_message("SNAP DEBUG: Process %d rejected by exeprefix filter: %s", pid, exe_buffer);
-                }
+            if (!accept_file(exe_buffer, kp_conf->system.exeprefix))
                 continue;
-            }
 
             func(GUINT_TO_POINTER(pid), exe_buffer, user_data);
         }

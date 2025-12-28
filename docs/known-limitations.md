@@ -84,6 +84,44 @@ Each increments raw_launches, but weighted calculation handles it gracefully.
 
 ---
 
+### 4. Snap Applications Not Fully Supported ⚠️
+
+**Problem:** Ubuntu snap packages run in a strict AppArmor sandbox that blocks access to `/proc/PID/exe` for snap-confined processes, even for root.
+
+**Impact:**
+- Snap apps like Firefox, Chromium, or other snap-packaged applications may not be tracked
+- The daemon cannot reliably detect or preload snap applications
+- This affects Ubuntu 22.04+ where many default apps are snaps
+
+**Technical Details:**
+```
+# Normal app (works fine):
+$ readlink /proc/12345/exe
+/usr/bin/firefox
+
+# Snap app (blocked by AppArmor):
+$ readlink /proc/67890/exe
+readlink: /proc/67890/exe: Permission denied
+```
+
+**Workaround:**
+- Install applications via `apt` instead of snap when possible:
+  ```bash
+  # Remove snap Firefox
+  sudo snap remove firefox
+  
+  # Install apt version
+  sudo add-apt-repository ppa:mozillateam/ppa
+  sudo apt update
+  sudo apt install firefox
+  ```
+- Use Flatpak instead (less restrictive sandboxing)
+- Accept that snap apps won't be preloaded
+
+**Status:** **Snap Security Limitation** - cannot be fixed without changes to snap/AppArmor
+
+---
+
 ## Prediction Limitations
 
 ### 4. Cannot Predict First-Time Launches
@@ -284,6 +322,7 @@ $ x-www-browser   # Also tracked as: /usr/lib/firefox-esr/firefox-esr
 |----------|-----------|----------|--------|
 | Detection | Process reuse not detected | Medium | Won't Fix |
 | Detection | Multi-process over-counting | Low | Acceptable |
+| **Detection** | **Snap apps not supported** | **High** | **Platform Limit** |
 | Prediction | First-time apps | Low | Mitigated |
 | Storage | Symlink canonicalization | Low | By Design |
 | Memory | Kernel eviction | Medium | Unavoidable |
