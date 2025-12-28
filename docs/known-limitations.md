@@ -84,14 +84,21 @@ Each increments raw_launches, but weighted calculation handles it gracefully.
 
 ---
 
-### 4. Snap Applications Not Fully Supported ⚠️
+### 4. Sandboxed Applications Not Fully Supported ⚠️
 
-**Problem:** Ubuntu snap packages run in a strict AppArmor sandbox that blocks access to `/proc/PID/exe` for snap-confined processes, even for root.
+**Problem:** Applications running in security sandboxes may block daemon access to `/proc/PID/exe`, preventing tracking and preloading.
 
-**Impact:**
-- Snap apps like Firefox, Chromium, or other snap-packaged applications may not be tracked
-- The daemon cannot reliably detect or preload snap applications
-- This affects Ubuntu 22.04+ where many default apps are snaps
+**Affected Technologies:**
+
+| Technology | Status | Notes |
+|------------|--------|-------|
+| **Snap** (Ubuntu) | ❌ Not working | AppArmor blocks `/proc` access |
+| **Firejail** | ⚠️ Likely broken | Sandbox restricts `/proc` visibility |
+| **Docker/Podman** | ❌ Not working | Different PID namespace |
+| **systemd-nspawn** | ❌ Not working | Container isolation |
+| **Flatpak** | ⚠️ Untested | Less restrictive, may work |
+| **AppImage** | ✅ Works | No sandbox |
+| **Native (apt/rpm)** | ✅ Works | Full `/proc` access |
 
 **Technical Details:**
 ```
@@ -99,10 +106,16 @@ Each increments raw_launches, but weighted calculation handles it gracefully.
 $ readlink /proc/12345/exe
 /usr/bin/firefox
 
-# Snap app (blocked by AppArmor):
+# Sandboxed app (blocked):
 $ readlink /proc/67890/exe
 readlink: /proc/67890/exe: Permission denied
 ```
+
+**Impact:**
+- Snap apps like Firefox, Chromium, or other snap-packaged applications cannot be tracked
+- Apps run in Firejail sandboxes may be invisible to the daemon
+- Containerized apps (Docker, Podman) are completely isolated
+- This affects Ubuntu 22.04+ where many default apps are snaps
 
 **Workaround:**
 - Install applications via `apt` instead of snap when possible:
@@ -115,10 +128,11 @@ readlink: /proc/67890/exe: Permission denied
   sudo apt update
   sudo apt install firefox
   ```
-- Use Flatpak instead (less restrictive sandboxing)
-- Accept that snap apps won't be preloaded
+- Use AppImage versions when available (no sandbox)
+- Avoid running frequently-used apps in Firejail if you want preloading
+- Accept that sandboxed apps won't be preloaded
 
-**Status:** **Snap Security Limitation** - cannot be fixed without changes to snap/AppArmor
+**Status:** **Security Sandbox Limitation** - cannot be fixed without changes to sandbox technologies
 
 ---
 
@@ -322,7 +336,7 @@ $ x-www-browser   # Also tracked as: /usr/lib/firefox-esr/firefox-esr
 |----------|-----------|----------|--------|
 | Detection | Process reuse not detected | Medium | Won't Fix |
 | Detection | Multi-process over-counting | Low | Acceptable |
-| **Detection** | **Snap apps not supported** | **High** | **Platform Limit** |
+| **Detection** | **Sandboxed apps (Snap, Docker, Firejail)** | **High** | **Platform Limit** |
 | Prediction | First-time apps | Low | Mitigated |
 | Storage | Symlink canonicalization | Low | By Design |
 | Memory | Kernel eviction | Medium | Unavoidable |
