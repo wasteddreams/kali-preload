@@ -99,8 +99,8 @@ mapprefix = /usr/;/lib;/var/cache/;!/
 # helpers (gsd-*, gdm-*, ibus-*, etc.) that run 24/7. Preloading them
 # is pointless since they're already in memory.
 #
-# default: !/usr/sbin/;!/usr/local/sbin/;!/usr/libexec/;/usr/;!/
-exeprefix = !/usr/sbin/;!/usr/local/sbin/;!/usr/libexec/;/usr/;!/
+# default: !/usr/sbin/;!/usr/local/sbin/;!/usr/libexec/;/usr/;/snap/;!/
+exeprefix = !/usr/sbin/;!/usr/local/sbin/;!/usr/libexec/;/usr/;/snap/;!/
 
 # processes:
 #
