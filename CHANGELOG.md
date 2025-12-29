@@ -5,50 +5,6 @@ All notable changes to Preheat will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.1] - 2025-12-29
-
-### ✨ Features
-
-#### Running Process Persistence
-- State file now persists running process information across daemon restarts
-- Seamless resumption of incremental weight tracking for long-running applications
-- PID validation on load prevents tracking stale or reused process IDs
-- Improved ranking accuracy for applications with extended runtimes
-
-#### Enhanced Launch Counting
-- Launch counter now distinguishes between user-initiated launches and child processes
-- Multi-process applications (browsers, IDEs) correctly counted as single launches
-- More accurate usage statistics for applications that spawn multiple processes
-
-### 🔧 Configuration
-
-- **autosave**: Default reduced from 3600s (1 hour) to 300s (5 minutes)
-  - Minimizes data loss on daemon crash or system failure
-  - More frequent state persistence with minimal performance impact
-
-### 📄 State File Format
-
-Extended state file format to include:
-- `PIDS <count>` - Running process subsection for each executable
-- `PID <pid> <start_time> <last_update> <user_initiated>` - Individual process tracking
-- Backward compatible: old daemons gracefully ignore new fields
-- Forward compatible: new daemons handle old state files
-
-### 🛠️ Internal Improvements
-
-- Fixed sscanf pointer advancement for indented state file lines
-- Added PID existence and executable path validation
-- Improved state file parser robustness
-- Made `get_parent_pid()` available for cross-module use
-
-### 📊 Impact
-
-- Long-running applications now accurately tracked and prioritized
-- More stable application rankings over time
-- Better preloading decisions for persistent processes
-
----
-
 ## [1.0.0] - 2025-12-25
 
 ### 🎉 Initial Stable Release
@@ -56,6 +12,24 @@ Extended state file format to include:
 The first production-ready release of Preheat, an adaptive readahead daemon for Linux that learns user behavior and preloads applications to reduce cold-start times by 30-60%.
 
 ### ✨ Features
+
+#### Running Process Persistence
+- State file persists running process information across daemon restarts
+- Seamless resumption of incremental weight tracking for long-running applications
+- PID validation on load prevents tracking stale or reused process IDs
+- Improved ranking accuracy for applications with extended runtimes
+
+#### Enhanced Launch Counting
+- Launch counter distinguishes between user-initiated launches and child processes
+- Multi-process applications (browsers, IDEs) correctly counted as single launches
+- More accurate usage statistics for applications that spawn multiple processes
+
+#### State File Format
+- Extended format includes running process tracking:
+  - `PIDS <count>` - Running process subsection for each executable
+  - `PID <pid> <start_time> <last_update> <user_initiated>` - Individual process tracking
+- Backward compatible: old daemons gracefully ignore new fields
+- Forward compatible: new daemons handle old state files
 
 #### Two-Tier Tracking System
 - **Priority Pool**: Applications you actively use and want preloaded
@@ -113,6 +87,7 @@ New configuration options in `/etc/preheat.conf`:
 - `recency_weight` - Weight for recent launches (0.0-1.0)
 - `short_lived_threshold` - Seconds below which processes are penalized
 - `enable_families` - Enable application family grouping
+- `autosave` - State file save interval (default: 300s for frequent persistence)
 
 ### 🐛 Bug Fixes
 
@@ -186,5 +161,4 @@ preheat-ctl health
 
 ---
 
-[1.0.1]: https://github.com/wasteddreams/preheat-linux/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/wasteddreams/preheat-linux/releases/tag/v1.0.0
