@@ -252,12 +252,12 @@ dopredict = true
 | Property | Value |
 |----------|-------|
 | Type | Integer (seconds) |
-| Default | `3600` (1 hour) |
+| Default | `300` (5 minutes) |
 
 More frequent saves provide better crash recovery but increase disk writes.
 
 ```ini
-autosave = 3600
+autosave = 300
 ```
 
 ---
@@ -520,7 +520,7 @@ memcached = 0
 [system]
 doscan = true
 dopredict = true
-autosave = 3600
+autosave = 300
 processes = 30
 sortstrategy = 3
 ```
