@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-# Snap Firefox Debug Script
-# Tests preheat daemon's ability to track snap-installed Firefox
-# Based on SNAP_FIREFOX_DEBUG_NOTES.md and ROOT_CAUSE_ANALYSIS.md
+# Snap Firefox Long Test Script
+# Tests preheat daemon's ability to track and prioritize snap-installed Firefox
+# Runs multiple Firefox sessions and verifies daemon tracking
 #
 
 set -e
@@ -15,315 +15,210 @@ BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
-# Dividers
 DIV="============================================="
 SUBDIV="---------------------------------------------"
 
 echo -e "${CYAN}${DIV}${NC}"
-echo -e "${CYAN}   Snap Firefox Debug Script for Preheat${NC}"
+echo -e "${CYAN}  Snap Firefox Long Test for Preheat${NC}"
 echo -e "${CYAN}${DIV}${NC}"
 echo ""
 
 # Check if running as root
 if [[ $EUID -ne 0 ]]; then
-    echo -e "${YELLOW}[WARN] Some tests require root. Re-run with sudo for full diagnostics.${NC}"
-    echo ""
+    echo -e "${RED}[ERROR] This test must be run as root (sudo)${NC}"
+    exit 1
 fi
 
 #######################################
-# Phase 1: Firefox Installation Check
+# Phase 1: Pre-Test Verification
 #######################################
-echo -e "${BLUE}[Phase 1] Firefox Installation Check${NC}"
+echo -e "${BLUE}[Phase 1] Pre-Test Verification${NC}"
 echo "$SUBDIV"
 
 # Check snap firefox
-if snap list firefox &>/dev/null; then
-    SNAP_VERSION=$(snap list firefox 2>/dev/null | tail -n1 | awk '{print $2}')
-    SNAP_REV=$(snap list firefox 2>/dev/null | tail -n1 | awk '{print $3}')
-    echo -e "${GREEN}✓ Firefox snap found: version=$SNAP_VERSION rev=$SNAP_REV${NC}"
-    
-    # Get confinement
-    CONFINEMENT=$(snap info firefox 2>/dev/null | grep -E "^confinement:" | awk '{print $2}')
-    echo -e "  Confinement: ${YELLOW}$CONFINEMENT${NC}"
-else
+if ! snap list firefox &>/dev/null; then
     echo -e "${RED}✗ Firefox snap NOT installed${NC}"
-    echo "  Install with: sudo snap install firefox"
     exit 1
 fi
+SNAP_REV=$(snap list firefox 2>/dev/null | tail -n1 | awk '{print $3}')
+echo -e "${GREEN}✓ Firefox snap found (rev: $SNAP_REV)${NC}"
 
-# Check for apt firefox
-if dpkg -l firefox 2>/dev/null | grep -q '^ii'; then
-    echo -e "${YELLOW}⚠ Firefox also installed via apt (may cause conflicts)${NC}"
+# Check daemon running
+if ! pgrep -x preheat &>/dev/null; then
+    echo -e "${YELLOW}Starting preheat daemon...${NC}"
+    systemctl start preheat
+    sleep 2
 fi
+echo -e "${GREEN}✓ Preheat daemon running (PID: $(pgrep -x preheat))${NC}"
 
-echo ""
-
-#######################################
-# Phase 2: Firefox Process Detection
-#######################################
-echo -e "${BLUE}[Phase 2] Firefox Process Detection${NC}"
-echo "$SUBDIV"
-
-# Find actual Firefox processes (not this script!)
-# We look for processes with /firefox or firefox-bin in their cmdline
-get_real_firefox_pids() {
-    local pids=""
-    for pid in $(ls /proc 2>/dev/null | grep -E '^[0-9]+$'); do
-        if [[ -f "/proc/$pid/cmdline" ]]; then
-            local cmd=$(cat "/proc/$pid/cmdline" 2>/dev/null | tr '\0' ' ')
-            # Match actual firefox binary paths, exclude this script
-            if echo "$cmd" | grep -qE '/firefox[^_]|firefox-bin|firefox-esr' 2>/dev/null; then
-                if ! echo "$cmd" | grep -q "snap_firefox_debug" 2>/dev/null; then
-                    pids="$pids $pid"
-                fi
-            fi
-        fi
-    done
-    echo $pids
-}
-
-FIREFOX_PIDS=$(get_real_firefox_pids)
-if [[ -z "$FIREFOX_PIDS" ]]; then
-    echo -e "${YELLOW}⚠ Firefox not running. Starting Firefox...${NC}"
-    nohup firefox &>/dev/null &
-    sleep 3
-    FIREFOX_PIDS=$(get_real_firefox_pids)
-fi
-
-if [[ -z "$FIREFOX_PIDS" ]]; then
-    echo -e "${RED}✗ Failed to find Firefox processes${NC}"
-    echo "  Make sure Firefox is running and try again."
-    exit 1
-fi
-
-# Count and display
-FIREFOX_COUNT=$(echo $FIREFOX_PIDS | wc -w)
-echo -e "${GREEN}✓ Found $FIREFOX_COUNT Firefox process(es): $FIREFOX_PIDS${NC}"
-
-echo ""
-
-#######################################
-# Phase 3: /proc Access Tests (CRITICAL)
-#######################################
-echo -e "${BLUE}[Phase 3] /proc Access Tests (Root Cause Verification)${NC}"
-echo "$SUBDIV"
-
-# Test Firefox PIDs found in Phase 2 (oldest first for stability)
-ALL_PIDS=$(echo $FIREFOX_PIDS | tr ' ' '\n' | sort -n | head -5)
-echo -e "Testing PIDs (oldest first): $ALL_PIDS"
-echo ""
-
-for PID in $ALL_PIDS; do
-    # Check if process still exists
-    if [[ ! -d "/proc/$PID" ]]; then
-        echo -e "${YELLOW}PID $PID: Process exited (transient child)${NC}"
-        continue
-    fi
-    
-    echo -e "${CYAN}Testing PID: $PID${NC}"
-    
-    # Test /proc/PID/exe
-    echo -n "  /proc/$PID/exe: "
-    if [[ -e "/proc/$PID/exe" ]]; then
-        if EXE_PATH=$(readlink "/proc/$PID/exe" 2>&1); then
-            echo -e "${GREEN}✓ Readable: $EXE_PATH${NC}"
-        else
-            echo -e "${RED}✗ BLOCKED (Permission denied)${NC}"
-        fi
-    else
-        echo -e "${YELLOW}⚠ Process exited${NC}"
-        continue
-    fi
-    
-    # Test /proc/PID/cmdline
-    echo -n "  /proc/$PID/cmdline: "
-    if [[ -f "/proc/$PID/cmdline" ]]; then
-        if CMDLINE=$(cat "/proc/$PID/cmdline" 2>/dev/null | tr '\0' ' ' | cut -c1-80); then
-            if [[ -n "$CMDLINE" ]]; then
-                echo -e "${GREEN}✓ Readable: ${CMDLINE}${NC}"
-            else
-                echo -e "${YELLOW}⚠ Empty (kernel thread?)${NC}"
-            fi
-        else
-            echo -e "${RED}✗ BLOCKED${NC}"
-        fi
-    else
-        echo -e "${YELLOW}⚠ Process exited${NC}"
-    fi
-    
-    # Test /proc/PID/maps (This is the critical one!)
-    echo -n "  /proc/$PID/maps: "
-    if [[ -f "/proc/$PID/maps" ]]; then
-        if MAPS_COUNT=$(wc -l < "/proc/$PID/maps" 2>/dev/null); then
-            echo -e "${GREEN}✓ Readable: $MAPS_COUNT lines${NC}"
-        else
-            echo -e "${RED}✗ BLOCKED (AppArmor likely preventing access)${NC}"
-        fi
-    else
-        echo -e "${RED}✗ File not accessible (AppArmor sandbox)${NC}"
-    fi
-    
-    # Test /proc/PID/stat  
-    echo -n "  /proc/$PID/stat: "
-    if [[ -f "/proc/$PID/stat" ]] && cat "/proc/$PID/stat" &>/dev/null; then
-        echo -e "${GREEN}✓ Readable${NC}"
-    else
-        echo -e "${RED}✗ BLOCKED${NC}"
-    fi
-    
-    # Test /proc/PID/status
-    echo -n "  /proc/$PID/status: "
-    if [[ -f "/proc/$PID/status" ]] && cat "/proc/$PID/status" &>/dev/null; then
-        echo -e "${GREEN}✓ Readable${NC}"
-    else
-        echo -e "${RED}✗ BLOCKED${NC}"
-    fi
-    
-    echo ""
-done
-
-#######################################
-# Phase 4: AppArmor Status
-#######################################
-echo -e "${BLUE}[Phase 4] AppArmor Status${NC}"
-echo "$SUBDIV"
-
-if command -v aa-status &>/dev/null; then
-    if [[ $EUID -eq 0 ]]; then
-        ENFORCED=$(aa-status 2>/dev/null | grep -A1000 "profiles are in enforce" | head -20)
-        FIREFOX_PROFILE=$(echo "$ENFORCED" | grep -i "firefox" || echo "None found")
-        echo "  AppArmor status: $(aa-status 2>/dev/null | head -1)"
-        echo "  Firefox-related profiles: $FIREFOX_PROFILE"
-    else
-        echo -e "${YELLOW}  Run as root to check AppArmor profiles${NC}"
-    fi
-else
-    echo "  AppArmor tools not installed"
-fi
-
-# Check recent AppArmor denials
-echo ""
-echo "  Recent AppArmor denials (last 5):"
-if [[ $EUID -eq 0 ]]; then
-    journalctl -k 2>/dev/null | grep -i apparmor | grep -i denied | tail -5 || echo "    No denials found"
-else
-    dmesg 2>/dev/null | grep -i apparmor | grep -i denied | tail -5 || echo "    Run as root for kernel logs"
-fi
-
-echo ""
-
-#######################################
-# Phase 5: Preheat Daemon Check
-#######################################
-echo -e "${BLUE}[Phase 5] Preheat Daemon Status${NC}"
-echo "$SUBDIV"
-
-if pgrep -x preheat &>/dev/null; then
-    echo -e "${GREEN}✓ Preheat daemon is running${NC}"
-    PREHEAT_PID=$(pgrep -x preheat)
-    echo "  PID: $PREHEAT_PID"
-else
-    echo -e "${YELLOW}⚠ Preheat daemon not running${NC}"
-    echo "  Start with: sudo systemctl start preheat"
-fi
-
-# Check if Firefox is tracked
-echo ""
-echo "  Checking if Firefox is tracked..."
-
+# Get initial state
 SNAP_PATH="/snap/firefox/${SNAP_REV}/usr/lib/firefox/firefox"
-if [[ -f "$SNAP_PATH" ]]; then
-    echo "  Snap binary path: $SNAP_PATH"
-    
-    if command -v preheat-ctl &>/dev/null; then
-        echo ""
-        echo "  preheat-ctl explain output:"
-        preheat-ctl explain "$SNAP_PATH" 2>&1 | head -20 | sed 's/^/    /'
-        
-        echo ""
-        echo "  Checking stats for firefox:"
-        preheat-ctl stats 2>&1 | grep -i firefox || echo "    Firefox NOT in stats"
-    else
-        echo -e "${YELLOW}  preheat-ctl not found in PATH${NC}"
-    fi
+echo ""
+echo "Target binary: $SNAP_PATH"
+
+# Check desktop scanner
+APPS_COUNT=$(grep "Desktop scanner initialized" /usr/local/var/log/preheat.log 2>/dev/null | tail -1 | grep -oP '\d+ GUI applications')
+echo "Desktop scanner: $APPS_COUNT"
+
+# Get initial Firefox state
+echo ""
+echo -e "${BLUE}Initial Firefox State:${NC}"
+if preheat-ctl explain "$SNAP_PATH" 2>&1 | grep -q "NOT TRACKED"; then
+    echo -e "${YELLOW}  Firefox is NOT yet tracked${NC}"
+    INITIAL_STATE="NOT_TRACKED"
+else
+    INITIAL_POOL=$(preheat-ctl explain "$SNAP_PATH" 2>&1 | grep "Pool:" | awk '{print $2}')
+    INITIAL_LAUNCHES=$(preheat-ctl explain "$SNAP_PATH" 2>&1 | grep "Raw Launches:" | awk '{print $3}')
+    echo "  Pool: $INITIAL_POOL"
+    echo "  Raw Launches: $INITIAL_LAUNCHES"
+    INITIAL_STATE="TRACKED"
 fi
 
 echo ""
 
 #######################################
-# Phase 6: Configuration Check
+# Phase 2: Launch Firefox Multiple Times
 #######################################
-echo -e "${BLUE}[Phase 6] Preheat Configuration${NC}"
+echo -e "${BLUE}[Phase 2] Launching Firefox Multiple Times${NC}"
 echo "$SUBDIV"
 
-CONFIG_FILES=(
-    "/etc/preheat/preheat.conf"
-    "/usr/local/etc/preheat/preheat.conf"
-    "/etc/preheat.conf"
-)
+LAUNCH_COUNT=5
+WAIT_BETWEEN=10  # seconds between launches
+RUNTIME=8        # seconds Firefox stays open each launch
 
-for cf in "${CONFIG_FILES[@]}"; do
-    if [[ -f "$cf" ]]; then
-        echo "  Found config: $cf"
-        echo "  exeprefix setting:"
-        grep -E "^exeprefix" "$cf" 2>/dev/null | sed 's/^/    /' || echo "    Not found"
-        break
+echo "Will launch Firefox $LAUNCH_COUNT times"
+echo "Each session: ${RUNTIME}s open, ${WAIT_BETWEEN}s cooldown"
+echo ""
+
+for i in $(seq 1 $LAUNCH_COUNT); do
+    echo -e "${CYAN}Launch $i of $LAUNCH_COUNT...${NC}"
+    
+    # Launch Firefox
+    su - $(logname) -c "DISPLAY=:0 firefox --new-window about:blank &" 2>/dev/null || \
+        (DISPLAY=:0 firefox --new-window about:blank &)
+    
+    sleep 2  # Let Firefox start
+    
+    # Find Firefox PIDs
+    FIREFOX_PIDS=$(pgrep -f "firefox" | head -5 | tr '\n' ' ')
+    echo "  PIDs: $FIREFOX_PIDS"
+    
+    # Wait for runtime
+    sleep $RUNTIME
+    
+    # Close Firefox
+    pkill -f "firefox" 2>/dev/null || true
+    echo "  Closed Firefox"
+    
+    # Cooldown
+    if [[ $i -lt $LAUNCH_COUNT ]]; then
+        echo "  Waiting ${WAIT_BETWEEN}s..."
+        sleep $WAIT_BETWEEN
     fi
 done
 
-# Check if /snap/ is in exeprefix
 echo ""
-if grep -rh "exeprefix" /etc/preheat/ /usr/local/etc/preheat/ 2>/dev/null | grep -q "/snap/"; then
-    echo -e "${GREEN}✓ /snap/ is in exeprefix configuration${NC}"
+echo -e "${GREEN}✓ Completed $LAUNCH_COUNT Firefox launches${NC}"
+
+#######################################
+# Phase 3: Wait for Daemon Cycle
+#######################################
+echo ""
+echo -e "${BLUE}[Phase 3] Waiting for Daemon Scan Cycle${NC}"
+echo "$SUBDIV"
+
+CYCLE_TIME=95
+echo "Waiting ${CYCLE_TIME}s for daemon to process..."
+echo ""
+
+# Show progress
+for i in $(seq 1 $CYCLE_TIME); do
+    printf "\r  [%3d/%d seconds]" $i $CYCLE_TIME
+    sleep 1
+done
+echo ""
+echo ""
+
+#######################################
+# Phase 4: Verify Results
+#######################################
+echo -e "${BLUE}[Phase 4] Verification Results${NC}"
+echo "$DIV"
+echo ""
+
+# Check Firefox in stats
+echo -e "${CYAN}Firefox Status:${NC}"
+preheat-ctl explain "$SNAP_PATH" 2>&1 | grep -E "Status:|Pool:|Weighted|Raw Launches:|Combined:" | sed 's/^/  /'
+
+echo ""
+
+# Get final values
+FINAL_POOL=$(preheat-ctl explain "$SNAP_PATH" 2>&1 | grep "Pool:" | awk '{print $2}')
+FINAL_LAUNCHES=$(preheat-ctl explain "$SNAP_PATH" 2>&1 | grep "Raw Launches:" | awk '{print $3}')
+FINAL_WEIGHTED=$(preheat-ctl explain "$SNAP_PATH" 2>&1 | grep "Weighted Launches:" | awk '{print $2}')
+
+# Check in top apps
+echo -e "${CYAN}Top Apps Check:${NC}"
+preheat-ctl stats 2>&1 | grep -i firefox || echo "  Firefox not yet in top apps list"
+
+echo ""
+
+#######################################
+# Phase 5: Test Summary
+#######################################
+echo -e "${BLUE}${DIV}${NC}"
+echo -e "${BLUE}              TEST SUMMARY${NC}"
+echo -e "${BLUE}${DIV}${NC}"
+echo ""
+
+# Pool check
+echo -n "Pool Classification: "
+if [[ "$FINAL_POOL" == "priority" ]]; then
+    echo -e "${GREEN}✓ PASS (priority pool)${NC}"
+    POOL_PASS=true
 else
-    echo -e "${RED}✗ /snap/ may not be in exeprefix${NC}"
-    echo "  Add '/snap/' to exeprefix_raw in preheat.conf"
+    echo -e "${RED}✗ FAIL (expected: priority, got: $FINAL_POOL)${NC}"
+    POOL_PASS=false
+fi
+
+# Launch count check
+echo -n "Launch Tracking: "
+if [[ -n "$FINAL_LAUNCHES" ]] && [[ "$FINAL_LAUNCHES" -ge 1 ]]; then
+    echo -e "${GREEN}✓ PASS ($FINAL_LAUNCHES launches recorded)${NC}"
+    LAUNCH_PASS=true
+else
+    echo -e "${RED}✗ FAIL (launches not recorded)${NC}"
+    LAUNCH_PASS=false
+fi
+
+# Desktop file match
+echo -n "Desktop File Match: "
+if preheat-ctl explain "$SNAP_PATH" 2>&1 | grep -q "\.desktop"; then
+    echo -e "${GREEN}✓ PASS (matched .desktop file)${NC}"
+    DESKTOP_PASS=true
+else
+    echo -e "${YELLOW}⚠ Could not verify .desktop match${NC}"
+    DESKTOP_PASS=false
 fi
 
 echo ""
 
-#######################################
-# Phase 7: Manual Verification Commands
-#######################################
-echo -e "${BLUE}[Phase 7] Manual Verification Commands${NC}"
-echo "$SUBDIV"
-
-echo "Run these commands manually for deeper investigation:"
-echo ""
-echo "  # Check if daemon can read maps (run as root):"
-echo "  sudo cat /proc/\$(pgrep -n firefox)/maps | head"
-echo ""
-echo "  # Check snap confinement:"
-echo "  snap info firefox | grep confinement"
-echo ""
-echo "  # Check AppArmor logs for maps access:"
-echo "  sudo journalctl | grep -E 'apparmor.*maps|DENIED.*firefox'"
-echo ""
-echo "  # Force daemon rescan:"
-echo "  sudo systemctl reload preheat"
-echo ""
-echo "  # Watch daemon logs in realtime:"
-echo "  sudo journalctl -fu preheat"
-echo ""
-
-#######################################
-# Phase 8: Summary
-#######################################
-echo -e "${BLUE}${DIV}${NC}"
-echo -e "${BLUE}                    SUMMARY${NC}"
-echo -e "${BLUE}${DIV}${NC}"
-
-echo ""
-echo "Based on SNAP_FIREFOX_ROOT_CAUSE_ANALYSIS.md:"
-echo ""
-echo "The preheat daemon fails to track snap Firefox because:"
-echo "  1. AppArmor blocks /proc/PID/exe → WORKAROUND: cmdline fallback (done)"
-echo "  2. AppArmor blocks /proc/PID/maps → FATAL: kp_proc_get_maps() returns 0"
-echo "  3. spy.c:new_exe_callback() silently exits if size==0"
-echo ""
-echo "Solution options:"
-echo "  - Option 1: Document as known limitation (done)"
-echo "  - Option 2: Accept exe without map scanning"  
-echo "  - Option 3: Desktop file fallback"
-echo ""
-echo -e "${CYAN}Script complete.${NC}"
+# Overall result
+if [[ "$POOL_PASS" == "true" && "$LAUNCH_PASS" == "true" ]]; then
+    echo -e "${GREEN}${DIV}${NC}"
+    echo -e "${GREEN}          ALL TESTS PASSED!${NC}"
+    echo -e "${GREEN}${DIV}${NC}"
+    echo ""
+    echo "Snap Firefox is correctly tracked by preheat daemon."
+    echo "  Pool: $FINAL_POOL"
+    echo "  Raw Launches: $FINAL_LAUNCHES"
+    echo "  Weighted: $FINAL_WEIGHTED"
+    exit 0
+else
+    echo -e "${RED}${DIV}${NC}"
+    echo -e "${RED}          SOME TESTS FAILED${NC}"
+    echo -e "${RED}${DIV}${NC}"
+    echo ""
+    echo "Check logs: /usr/local/var/log/preheat.log"
+    exit 1
+fi
