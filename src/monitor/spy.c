@@ -342,7 +342,8 @@ static void
 track_process_exit(kp_exe_t *exe, pid_t pid)
 {
     process_info_t *proc_info;
-    time_t now, duration;
+    time_t now, total_duration, unaccounted_duration;
+    double final_weight;
     
     g_return_if_fail(exe);
     g_return_if_fail(exe->running_pids);
@@ -351,14 +352,24 @@ track_process_exit(kp_exe_t *exe, pid_t pid)
     if (!proc_info)
         return;  /* Not tracked, this is fine */
     
-    /* Weight already accumulated incrementally via update_running_weights() */
-    /* Just update duration tracking */
     now = time(NULL);
-    duration = now - proc_info->start_time;
-    if (duration < 0)
-        duration = 0;  /* Clock skew protection */
+    total_duration = now - proc_info->start_time;
+    if (total_duration < 0)
+        total_duration = 0;  /* Clock skew protection */
     
-    exe->total_duration_sec += (unsigned long)duration;
+    /* Calculate weight for the remaining time since last incremental update.
+     * This ensures apps that close between scans still get their weight added.
+     * Without this, short-lived apps would contribute 0 weight. */
+    unaccounted_duration = now - proc_info->last_weight_update;
+    if (unaccounted_duration > 0) {
+        final_weight = calculate_launch_weight((time_t)unaccounted_duration, 
+                                               proc_info->user_initiated);
+        exe->weighted_launches += final_weight;
+        g_debug("Exit weight for %s (pid %d): +%.2f (unaccounted %lds)",
+                exe->path, pid, final_weight, (long)unaccounted_duration);
+    }
+    
+    exe->total_duration_sec += (unsigned long)total_duration;
     
     /* NOTE: Do NOT remove from hash table here - it's done automatically by
      * g_hash_table_foreach_remove() when clean_exited_pids_callback returns TRUE */
