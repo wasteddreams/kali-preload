@@ -41,6 +41,68 @@ desktop_app_free(gpointer data)
 }
 
 /**
+ * Try to resolve snap wrapper to actual binary
+ *
+ * Snap installs wrappers in /snap/bin/<name> that are scripts, not symlinks.
+ * This function finds the actual binary inside the snap squashfs mount.
+ *
+ * Common patterns:
+ *   /snap/<name>/current/usr/bin/<name>
+ *   /snap/<name>/current/usr/lib/<name>/<name>
+ *   /snap/<name>/current/bin/<name>
+ *
+ * @param wrapper_path  Path like /snap/bin/firefox
+ * @return              Resolved binary path (caller frees), or NULL if not found
+ */
+static char *
+resolve_snap_binary(const char *wrapper_path)
+{
+    char snap_path[PATH_MAX];
+    char resolved[PATH_MAX];
+    const char *snap_name;
+    
+    /* Only handle /snap/bin/ wrappers */
+    if (!wrapper_path || !g_str_has_prefix(wrapper_path, "/snap/bin/")) {
+        return NULL;
+    }
+    
+    /* Extract snap name from /snap/bin/<name> */
+    snap_name = wrapper_path + strlen("/snap/bin/");
+    if (!*snap_name) {
+        return NULL;
+    }
+    
+    /* Try common snap binary locations (use /current for version-independent path) */
+    
+    /* Pattern 1: /snap/<name>/current/usr/lib/<name>/<name> (Firefox, etc.) */
+    g_snprintf(snap_path, sizeof(snap_path),
+               "/snap/%s/current/usr/lib/%s/%s", snap_name, snap_name, snap_name);
+    if (access(snap_path, X_OK) == 0 && realpath(snap_path, resolved)) {
+        g_debug("Snap resolution: %s → %s", wrapper_path, resolved);
+        return g_strdup(resolved);
+    }
+    
+    /* Pattern 2: /snap/<name>/current/usr/bin/<name> */
+    g_snprintf(snap_path, sizeof(snap_path),
+               "/snap/%s/current/usr/bin/%s", snap_name, snap_name);
+    if (access(snap_path, X_OK) == 0 && realpath(snap_path, resolved)) {
+        g_debug("Snap resolution: %s → %s", wrapper_path, resolved);
+        return g_strdup(resolved);
+    }
+    
+    /* Pattern 3: /snap/<name>/current/bin/<name> */
+    g_snprintf(snap_path, sizeof(snap_path),
+               "/snap/%s/current/bin/%s", snap_name, snap_name);
+    if (access(snap_path, X_OK) == 0 && realpath(snap_path, resolved)) {
+        g_debug("Snap resolution: %s → %s", wrapper_path, resolved);
+        return g_strdup(resolved);
+    }
+    
+    g_debug("Snap resolution failed for: %s", wrapper_path);
+    return NULL;
+}
+
+/**
  * Resolve Exec= line to actual executable path
  *
  * Handles:
@@ -48,6 +110,7 @@ desktop_app_free(gpointer data)
  * - Relative commands: firefox → /usr/bin/firefox (via PATH)
  * - Arguments: "firefox %u" → /usr/bin/firefox
  * - Field codes: %u, %U, %f, %F (removed)
+ * - Snap wrappers: /snap/bin/firefox → /snap/firefox/current/usr/lib/firefox/firefox
  */
 static char *
 resolve_exec_path(const char *exec_line)
@@ -89,6 +152,15 @@ resolve_exec_path(const char *exec_line)
         if (realpath(resolved, canonical)) {
             g_free(resolved);
             resolved = g_strdup(canonical);
+        }
+    }
+
+    /* Handle snap wrappers: /snap/bin/X are scripts, not symlinks to binaries */
+    if (resolved && g_str_has_prefix(resolved, "/snap/bin/")) {
+        char *snap_resolved = resolve_snap_binary(resolved);
+        if (snap_resolved) {
+            g_free(resolved);
+            resolved = snap_resolved;
         }
     }
 
