@@ -295,8 +295,8 @@ exemap_bid_in_maps_wrapper(gpointer exemap, gpointer exe, gpointer user_data)
  * Decide a cutoff based on memory conditions and readahead.
  */
 /**
- * Track which exes had maps preloaded for hit/miss statistics
- * Called after readahead to record preload times at the exe level.
+ * Record preload timestamps for exes whose maps are being preloaded.
+ * Used for hit/miss tracking when processes start.
  */
 static void
 record_preloaded_exes(kp_map_t **maps, int count)
@@ -313,7 +313,7 @@ record_preloaded_exes(kp_map_t **maps, int count)
         while (g_hash_table_iter_next(&iter, &key, &value)) {
             kp_exe_t *exe = (kp_exe_t *)value;
             
-            /* Check if this exe uses this map via exemaps (GSet = GPtrArray) */
+            /* Check if exe uses this map */
             for (guint j = 0; j < exe->exemaps->len; j++) {
                 kp_exemap_t *exemap = g_ptr_array_index(exe->exemaps, j);
                 if (exemap && exemap->map && exemap->map->path && 
@@ -376,7 +376,7 @@ kp_prophet_readahead(GPtrArray *maps_arr)
             memavailtotal, memavailtotal - memavail);
 
     if (i) {
-        /* Record preloaded exes BEFORE calling readahead for hit tracking */
+        /* Record preload times for hit tracking */
         record_preloaded_exes((kp_map_t **)maps_arr->pdata, i);
         
         i = kp_readahead((kp_map_t **)maps_arr->pdata, i);

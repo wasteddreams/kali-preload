@@ -294,11 +294,8 @@ track_process_start(kp_exe_t *exe, pid_t pid, pid_t parent_pid)
         g_debug("Desktop app fallback: %s (pid %d)", exe->path, pid);
     }
     
-    /* KEY FIX: Only count as a new launch if this is the FIRST user-initiated
-     * instance. If exe already has a user-initiated process running, this new
-     * process is a child/worker (like Firefox content processes), not a new
-     * user launch. This handles multi-process apps like Firefox, Chrome, etc.
-     * where the main process spawns many content/GPU/utility processes. */
+    /* Multi-process app handling: only count first user-initiated instance as
+     * a launch. Subsequent instances (Firefox content/GPU processes) are workers. */
     gboolean is_new_launch = FALSE;
     if (proc_info->user_initiated) {
         if (!exe_has_user_initiated_running(exe)) {
@@ -357,9 +354,7 @@ track_process_exit(kp_exe_t *exe, pid_t pid)
     if (total_duration < 0)
         total_duration = 0;  /* Clock skew protection */
     
-    /* Calculate weight for the remaining time since last incremental update.
-     * This ensures apps that close between scans still get their weight added.
-     * Without this, short-lived apps would contribute 0 weight. */
+    /* Add weight for time since last update (ensures short sessions get counted) */
     unaccounted_duration = now - proc_info->last_weight_update;
     if (unaccounted_duration > 0) {
         final_weight = calculate_launch_weight((time_t)unaccounted_duration, 
@@ -615,10 +610,7 @@ kp_spy_scan(gpointer data)
     state_changed_exes = new_running_exes = NULL;
     new_exes = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 
-    /* CRITICAL: Clean up exited PIDs BEFORE processing new processes.
-     * This ensures that when user restarts an app, old PID entries are cleared
-     * first, allowing the new instance to be properly counted as a new launch.
-     * If we clean up after, the old PIDs would block new launch detection. */
+    /* Clean exited PIDs first so app restarts are counted as new launches */
     GHashTableIter iter;
     gpointer key, value;
     g_hash_table_iter_init(&iter, kp_state->exes);
