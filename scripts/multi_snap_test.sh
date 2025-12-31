@@ -44,12 +44,13 @@ echo ""
 
 #######################################
 # Configuration
-# CRITICAL: Apps must run LONGER than daemon cycle (90s) to be detected!
+# Note: Apps should run longer than daemon cycle (90s) for reliable detection.
+# These are reasonable defaults for testing.
 #######################################
-LAUNCHES_PER_APP=2          # Fewer launches but longer runtime each
-WAIT_AFTER_LAUNCH=100       # MUST be > 90s (daemon cycle time)
-WAIT_BETWEEN_APPS=30        # seconds between different apps  
-WAIT_FOR_DAEMON=120         # seconds to wait for daemon scan after all launches
+LAUNCHES_PER_APP=3          # Number of launches per app
+WAIT_AFTER_LAUNCH=20        # Seconds to keep app open
+WAIT_BETWEEN_APPS=15        # Seconds between different apps  
+WAIT_FOR_DAEMON=100         # Seconds to wait for daemon scan after all launches
 
 # Declare associative arrays
 declare -A APP_PATHS
