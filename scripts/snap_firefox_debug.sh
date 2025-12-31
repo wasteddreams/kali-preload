@@ -93,21 +93,22 @@ echo ""
 for i in $(seq 1 $LAUNCH_COUNT); do
     echo -e "${CYAN}Launch $i of $LAUNCH_COUNT...${NC}"
     
-    # Launch Firefox
-    su - $(logname) -c "DISPLAY=:0 firefox --new-window about:blank &" 2>/dev/null || \
-        (DISPLAY=:0 firefox --new-window about:blank &)
+    # Launch Firefox with timeout (will auto-close)
+    timeout $RUNTIME firefox --new-window about:blank 2>/dev/null &
+    FIREFOX_JOB=$!
     
     sleep 2  # Let Firefox start
     
     # Find Firefox PIDs
-    FIREFOX_PIDS=$(pgrep -f "firefox" | head -5 | tr '\n' ' ')
+    FIREFOX_PIDS=$(pgrep -f "/firefox" 2>/dev/null | head -5 | tr '\n' ' ')
     echo "  PIDs: $FIREFOX_PIDS"
     
-    # Wait for runtime
-    sleep $RUNTIME
+    # Wait for timeout to kill Firefox
+    sleep $((RUNTIME + 2))
     
-    # Close Firefox
-    pkill -f "firefox" 2>/dev/null || true
+    # Gentle cleanup - only kill firefox processes, not timeout
+    killall firefox 2>/dev/null || true
+    
     echo "  Closed Firefox"
     
     # Cooldown
