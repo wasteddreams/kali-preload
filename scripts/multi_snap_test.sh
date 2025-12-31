@@ -44,11 +44,12 @@ echo ""
 
 #######################################
 # Configuration
+# CRITICAL: Apps must run LONGER than daemon cycle (90s) to be detected!
 #######################################
-LAUNCHES_PER_APP=3
-WAIT_AFTER_LAUNCH=15    # seconds to keep app open
-WAIT_BETWEEN_APPS=20    # seconds between different apps
-WAIT_FOR_DAEMON=60      # seconds to wait for daemon scan after all launches
+LAUNCHES_PER_APP=2          # Fewer launches but longer runtime each
+WAIT_AFTER_LAUNCH=100       # MUST be > 90s (daemon cycle time)
+WAIT_BETWEEN_APPS=30        # seconds between different apps  
+WAIT_FOR_DAEMON=120         # seconds to wait for daemon scan after all launches
 
 # Declare associative arrays
 declare -A APP_PATHS
@@ -61,12 +62,10 @@ declare -A APP_FINAL
 echo -e "${BLUE}[Phase 1] Discovering Snap Apps${NC}"
 echo "$SUBDIV"
 
-# Check daemon
-if ! pgrep -x preheat &>/dev/null; then
-    echo -e "${YELLOW}Starting preheat daemon...${NC}"
-    systemctl start preheat
-    sleep 3
-fi
+# Restart daemon to pick up any new snap revisions
+echo -e "${YELLOW}Restarting preheat daemon (important after snap reinstalls)...${NC}"
+systemctl restart preheat
+sleep 5
 echo -e "${GREEN}✓ Preheat daemon running (PID: $(pgrep -x preheat))${NC}"
 
 # Find installed snap GUI apps
