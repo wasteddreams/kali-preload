@@ -163,21 +163,26 @@ resolve_exec_path(const char *exec_line)
 
     g_strfreev(argv);
 
-    /* Canonicalize path */
-    if (resolved) {
-        char canonical[PATH_MAX];
-        if (realpath(resolved, canonical)) {
-            g_free(resolved);
-            resolved = g_strdup(canonical);
-        }
-    }
-
-    /* Handle snap wrappers: /snap/bin/X are scripts, not symlinks to binaries */
+    /* Handle snap wrappers BEFORE realpath!
+     * /snap/bin/firefox is a symlink to /usr/bin/snap (the snap runner).
+     * realpath() would resolve it to /usr/bin/snap, breaking our snap detection.
+     * We must check for /snap/bin/ prefix BEFORE canonicalization. */
     if (resolved && g_str_has_prefix(resolved, "/snap/bin/")) {
         char *snap_resolved = resolve_snap_binary(resolved);
         if (snap_resolved) {
             g_free(resolved);
             resolved = snap_resolved;
+            /* snap_resolved is already canonicalized by resolve_snap_binary */
+            return resolved;
+        }
+    }
+
+    /* Canonicalize path (for non-snap binaries) */
+    if (resolved) {
+        char canonical[PATH_MAX];
+        if (realpath(resolved, canonical)) {
+            g_free(resolved);
+            resolved = g_strdup(canonical);
         }
     }
 
