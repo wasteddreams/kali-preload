@@ -57,6 +57,50 @@
 #define SESSION_MAX_APPS_DEFAULT 5
 #define SESSION_MEMORY_THRESHOLD 20   /* 20% minimum free */
 
+/**
+ * Load memory maps for a session app that has none (lazy loading)
+ * Creates a single map covering the entire binary file.
+ */
+static gboolean
+load_maps_for_session_app(kp_exe_t *exe)
+{
+    struct stat st;
+    kp_map_t *map;
+    kp_exemap_t *exemap;
+    
+    if (!exe || !exe->path)
+        return FALSE;
+    
+    /* Check if file exists and get size */
+    if (stat(exe->path, &st) < 0) {
+        g_debug("Session: cannot stat %s: %s", exe->path, strerror(errno));
+        return FALSE;
+    }
+    
+    /* Skip small files */
+    if ((size_t)st.st_size < (size_t)kp_conf->model.minsize) {
+        return FALSE;
+    }
+    
+    /* Create single map for entire file */
+    map = kp_map_new(exe->path, 0, st.st_size);
+    if (!map)
+        return FALSE;
+    
+    /* Create exemap and add to exe */
+    exemap = kp_exe_map_new(exe, map);
+    if (!exemap) {
+        kp_map_free(map);
+        return FALSE;
+    }
+    
+    exemap->prob = 1.0;
+    exe->size = st.st_size;
+    
+    g_debug("Session: loaded map for %s (%zu bytes)", exe->path, (size_t)st.st_size);
+    return TRUE;
+}
+
 /* Global session state */
 static struct {
     gboolean initialized;
@@ -342,6 +386,7 @@ kp_session_preload_top_apps(int max_apps)
 {
     GPtrArray *top_apps;
     int preloaded = 0;
+    int maps_loaded = 0;
 
     if (!check_memory_available()) {
         g_debug("Session preload: skipping due to memory constraints");
@@ -355,18 +400,26 @@ kp_session_preload_top_apps(int max_apps)
     for (guint i = 0; i < top_apps->len; i++) {
         kp_exe_t *exe = g_ptr_array_index(top_apps, i);
 
+        /* Load maps if not already loaded (seeded apps don't have maps) */
+        if (g_set_size(exe->exemaps) == 0) {
+            if (load_maps_for_session_app(exe)) {
+                maps_loaded++;
+            }
+        }
+
         /* Give strong negative lnprob to trigger immediate preload */
         exe->lnprob = -15.0;  /* Very high priority */
         preloaded++;
 
-        g_debug("Session preload: boosting %s (usage: %d sec)",
-                exe->path, exe->time);
+        g_debug("Session preload: boosting %s (usage: %d sec, maps: %u)",
+                exe->path, exe->time, g_set_size(exe->exemaps));
     }
 
     g_ptr_array_free(top_apps, TRUE);
 
     if (preloaded > 0) {
-        g_message("Session preload: %d apps boosted for immediate loading", preloaded);
+        g_message("Session preload: %d apps boosted (%d maps loaded)", 
+                  preloaded, maps_loaded);
     }
 }
 
