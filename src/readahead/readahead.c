@@ -287,8 +287,8 @@ process_file(const char *path, size_t offset, size_t length)
     }
 
     if (maxprocs > 0) {
-        /* We're in a child process, exit */
-        exit(0);
+        /* We're in a child process - use _exit() to avoid parent's atexit handlers */
+        _exit(0);
     }
 }
 

@@ -421,7 +421,8 @@ read_crc32(read_context_t *rc)
     unsigned int stored_crc;
     
     if (1 > sscanf(rc->line, "%x", &stored_crc)) {
-        g_debug("CRC32 line malformed, ignoring");
+        g_warning("State file CRC32 malformed - potential data corruption");
+        rc->errmsg = READ_CRC_ERROR;
     }
 }
 

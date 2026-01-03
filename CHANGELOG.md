@@ -112,15 +112,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Feature:** Daemon now uses `flock()` on `/var/run/preheat.pid` to prevent multiple instances
 - **Behavior:** Second instance immediately exits with clear error message showing existing PID
 
+### 🔒 Memory Safety Audit (2026-01-03)
+
+A comprehensive memory safety audit was conducted using cppcheck, flawfinder, and AddressSanitizer.
+
+**MSA-1: Fork Child Uses `exit()` Instead of `_exit()` (HIGH)**
+- **File:** `src/readahead/readahead.c:291`
+- **Issue:** Forked child process called `exit(0)` which runs parent's atexit handlers
+- **Fix:** Changed to `_exit(0)` to bypass atexit handlers in child process
+
+**MSA-2: CRC Errors Logged at Debug Level (MEDIUM)**
+- **File:** `src/state/state_io.c:424`
+- **Issue:** Malformed CRC32 in state file logged as debug, masking corruption
+- **Fix:** Upgraded to `g_warning()` and set error flag
+
+**MSA-3: Memory Leak at Shutdown (LOW)**
+- **File:** `src/daemon/main.c:486-489`
+- **Issue:** Command-line argument strings not freed on exit (281 bytes)
+- **Fix:** Added `g_free()` calls for conffile, statefile, logfile before exit
+
 ### 📊 Summary
 
 | Severity | Count |
 |----------|-------|
 | Critical | 1 |
-| High | 1 |
-| Medium | 8 |
-| Low | 11 |
-| **Total** | **21 bugs fixed** |
+| High | 2 |
+| Medium | 9 |
+| Low | 12 |
+| **Total** | **24 bugs fixed** |
 
 ---
 
